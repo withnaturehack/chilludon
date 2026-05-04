@@ -57,7 +57,14 @@ export default function MoreScreen() {
   function handleLogout() {
     Alert.alert("Logout", "Are you sure you want to logout?", [
       { text: "Cancel", style: "cancel" },
-      { text: "Logout", style: "destructive", onPress: logout },
+      {
+        text: "Logout",
+        style: "destructive",
+        onPress: () => {
+          logout();
+          router.replace("/auth/login");
+        },
+      },
     ]);
   }
 
@@ -72,7 +79,6 @@ export default function MoreScreen() {
         showsVerticalScrollIndicator={false}
       >
         <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
-          {/* User Card */}
           <TouchableOpacity
             style={styles.userCardWrap}
             onPress={() => router.push("/(student)/profile")}
@@ -101,7 +107,6 @@ export default function MoreScreen() {
             </LinearGradient>
           </TouchableOpacity>
 
-          {/* Menu Groups */}
           {MENU_GROUPS.map((group) => (
             <View key={group.label} style={styles.menuGroup}>
               <Text style={styles.groupLabel}>{group.label}</Text>
@@ -127,19 +132,17 @@ export default function MoreScreen() {
             </View>
           ))}
 
-          {/* App Info Card */}
           <View style={styles.infoCard}>
             <LinearGradient colors={["rgba(59,130,246,0.08)", "rgba(6,182,212,0.04)"]} style={StyleSheet.absoluteFill} />
             <LinearGradient colors={["#1D4ED8", "#3B82F6"]} style={styles.infoIconBg}>
               <MaterialCommunityIcons name="shield-lock" size={18} color="#FFF" />
             </LinearGradient>
             <View style={styles.infoText}>
-              <Text style={styles.infoTitle}>CyberShield India v1.0</Text>
+              <Text style={styles.infoTitle}>CyberShield India v2.0</Text>
               <Text style={styles.infoSub}>National Cybersecurity Platform · Owned by Kartik Chilkoti</Text>
             </View>
           </View>
 
-          {/* Logout */}
           <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout} activeOpacity={0.75}>
             <Feather name="log-out" size={18} color="#EF4444" />
             <Text style={styles.logoutText}>Logout</Text>

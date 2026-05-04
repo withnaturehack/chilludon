@@ -6,7 +6,7 @@ interface User {
   id: string;
   name: string;
   email: string;
-  role: "student" | "police" | "company" | "admin";
+  role: "student" | "police" | "company" | "admin" | "citizen";
   skill_level?: string;
   total_points?: number;
   national_rank?: number | null;
@@ -18,6 +18,7 @@ interface User {
   station_name?: string | null;
   badge_number?: string | null;
   company_name?: string | null;
+  phone?: string | null;
 }
 
 interface AuthContextType {
@@ -41,6 +42,7 @@ interface RegisterData {
   station_name?: string;
   badge_number?: string;
   company_name?: string;
+  phone?: string;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -69,7 +71,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(JSON.parse(storedUser));
       }
     } catch {
-      // ignore
     } finally {
       setIsLoading(false);
     }
@@ -117,7 +118,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(userData);
       }
     } catch {
-      // ignore
     }
   }, [token]);
 

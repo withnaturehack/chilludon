@@ -101,7 +101,7 @@ export default function RakshBotScreen() {
 
   const topPad = insets.top + (isWeb ? 16 : 0);
 
-  const renderItem = useCallback(({ item, index }: { item: Message; index: number }) => {
+  const renderItem = useCallback(({ item }: { item: Message }) => {
     const isBot = item.role === "assistant";
     return (
       <View style={[styles.msgRow, isBot ? styles.botRow : styles.userRow]}>
@@ -127,7 +127,6 @@ export default function RakshBotScreen() {
   return (
     <LinearGradient colors={["#060D1A", "#0B1120"]} style={{ flex: 1 }}>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : "height"}>
-        {/* Header */}
         <LinearGradient colors={["#0F2040", "#1A3A6B", "#0B1120"]} style={[styles.header, { paddingTop: topPad + 12 }]}>
           <View style={styles.headerContent}>
             <LinearGradient colors={["#1D4ED8", "#3B82F6"]} style={styles.botIconBg}>
@@ -137,7 +136,7 @@ export default function RakshBotScreen() {
               <Text style={styles.botName}>RakshBot</Text>
               <View style={styles.onlineRow}>
                 <Animated.View style={[styles.onlineDot, { transform: [{ scale: pulseAnim }] }]} />
-                <Text style={styles.onlineText}>AI Mentor · Powered by Claude AI</Text>
+                <Text style={styles.onlineText}>AI Mentor · Powered by NVIDIA AI</Text>
               </View>
             </View>
             <View style={styles.headerBadge}>
@@ -147,7 +146,6 @@ export default function RakshBotScreen() {
           </View>
         </LinearGradient>
 
-        {/* Messages */}
         {isLoading ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator color="#3B82F6" size="large" />
@@ -171,7 +169,7 @@ export default function RakshBotScreen() {
                 </LinearGradient>
                 <Text style={styles.emptyTitle}>Namaste! Main RakshBot hun 🙏</Text>
                 <Text style={styles.emptySubtitle}>
-                  Your personal AI cybersecurity mentor powered by Claude AI. Ask me anything in Hindi, English, or Hinglish!
+                  Your personal AI cybersecurity mentor powered by NVIDIA AI. Ask me anything in Hindi, English, or Hinglish!
                 </Text>
               </View>
             }
@@ -192,7 +190,6 @@ export default function RakshBotScreen() {
           />
         )}
 
-        {/* Quick Prompts */}
         {allMessages.length === 0 && !isLoading && (
           <View style={styles.quickPromptsContainer}>
             <FlatList
@@ -215,7 +212,6 @@ export default function RakshBotScreen() {
           </View>
         )}
 
-        {/* Input */}
         <View style={[styles.inputContainer, { paddingBottom: insets.bottom + 8 }]}>
           <View style={styles.inputRow}>
             <MaterialCommunityIcons name="robot-outline" size={20} color="rgba(255,255,255,0.3)" />
@@ -248,7 +244,7 @@ export default function RakshBotScreen() {
 const styles = StyleSheet.create({
   header: { paddingHorizontal: 20, paddingBottom: 16 },
   headerContent: { flexDirection: "row", alignItems: "center", gap: 12 },
-  botIconBg: { width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center", shadowColor: "#3B82F6", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 8, elevation: 6 },
+  botIconBg: { width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center" },
   botName: { color: "#FFF", fontSize: 18, fontFamily: "Inter_700Bold" },
   onlineRow: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 2 },
   onlineDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: "#10B981" },

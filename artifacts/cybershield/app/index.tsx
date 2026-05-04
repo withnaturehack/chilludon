@@ -32,6 +32,8 @@ export default function IndexScreen() {
           if (user.role === "student" || user.role === "admin") router.replace("/(student)");
           else if (user.role === "police") router.replace("/(police)");
           else if (user.role === "company") router.replace("/(company)");
+          else if (user.role === "citizen") router.replace("/(citizen)");
+          else router.replace("/(student)");
         } else {
           const seen = await AsyncStorage.getItem("welcome_seen");
           if (seen) {
@@ -70,7 +72,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, alignItems: "center", justifyContent: "center" },
   content: { alignItems: "center", gap: 16 },
   iconWrap: { marginBottom: 8 },
-  iconBg: { width: 96, height: 96, borderRadius: 24, alignItems: "center", justifyContent: "center", shadowColor: "#3B82F6", shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.6, shadowRadius: 24, elevation: 16 },
+  iconBg: { width: 96, height: 96, borderRadius: 24, alignItems: "center", justifyContent: "center" },
   title: { color: "#F8FAFC", fontSize: 28, fontFamily: "Inter_700Bold", letterSpacing: 0.5 },
   subtitle: { color: "rgba(255,255,255,0.5)", fontSize: 14, fontFamily: "Inter_400Regular" },
   dotsRow: { flexDirection: "row", gap: 6, marginTop: 8 },

@@ -32,17 +32,31 @@ pnpm workspace monorepo using TypeScript. Full-stack national cybersecurity plat
 - **Student** → `/(student)/` tabs: Home, Submit, CTF, RakshBot, More
 - **Police** → `/(police)/` tabs: Dashboard, Review, Cases, Intel (+ hidden: analytics)
 - **Company** → `/(company)/` tabs: Dashboard, Bounty, Internships, Researchers (+ hidden: reports)
+- **Citizen** → `/(citizen)/` tabs: Safety (Dashboard), Alerts, Report, News
 - **Admin** → treated as student role
 
 ### Test Accounts
 - Student: `arjun@student.in` / `Student@123`
 - Police: `police@cybershield.in` / `Police@123`
 - Company: `company@cybershield.in` / `Company@123`
+- Citizen: `citizen@cybershield.in` / `Citizen@123` (auto-created by seed on startup)
 
-### Login / Auth Navigation (FIXED)
+### Login / Auth Navigation
 - `AuthContext.login()` and `AuthContext.register()` both return `User` object
-- `login.tsx` and `register.tsx` call `navigateByRole(user.role)` after success
+- `login.tsx` and `register.tsx` call `navigateByRole(user.role)` after success — handles all 5 roles including citizen
 - Navigation happens directly in the auth screens, not relying on `useEffect` in `index.tsx`
+- **Logout fix**: All dashboards (student more.tsx, police/index.tsx, company/index.tsx, citizen/index.tsx) now call `logout()` then `router.replace("/auth/login")` — navigation always works
+
+### Citizen Role Features
+- **Safety Dashboard**: Greeting, threat level indicator, quick actions, live alerts preview, daily safety tips, 1930 helpline card
+- **Alerts**: Full cyber alert list with severity filter (critical/high/medium/low), CERT-In verified badges
+- **Report Cyber Crime**: 3-step guided form — crime type selection (8 types), description + details, GPS location detection using expo-location
+- **News**: Cyber safety news feed with category filter (Scam Alert, Arrest, Safety Tips, Govt Update)
+- **API routes**: GET /citizen/alerts, POST /citizen/report, GET /citizen/news, GET /citizen/stats
+
+### RakshBot
+- Powered by NVIDIA AI (meta/llama-3.1-8b-instruct via NVIDIA_API_KEY)
+- Header now correctly shows "Powered by NVIDIA AI" (was "Claude AI" — fixed)
 
 ### App Startup Flow
 1. `app/index.tsx` — shows splash, checks auth + AsyncStorage `welcome_seen` flag

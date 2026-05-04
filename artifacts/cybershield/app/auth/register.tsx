@@ -13,6 +13,7 @@ import { LinearGradient } from "expo-linear-gradient";
 
 const ROLES = [
   { value: "student", label: "Student", icon: "school", desc: "Hunt bugs & earn rewards", color: "#3B82F6" },
+  { value: "citizen", label: "Citizen", icon: "account-heart", desc: "Report & stay safe", color: "#06B6D4" },
   { value: "police", label: "Police / Govt", icon: "shield-check", desc: "Review & manage cases", color: "#10B981" },
   { value: "company", label: "Company", icon: "domain", desc: "Run bounty programs", color: "#F59E0B" },
 ];
@@ -24,6 +25,8 @@ function navigateByRole(role: string) {
     router.replace("/(police)");
   } else if (role === "company") {
     router.replace("/(company)");
+  } else if (role === "citizen") {
+    router.replace("/(citizen)");
   } else {
     router.replace("/(student)");
   }
@@ -68,6 +71,7 @@ export default function RegisterScreen() {
   const [role, setRole] = useState("student");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [collegeName, setCollegeName] = useState("");
   const [state, setState] = useState("");
@@ -98,7 +102,7 @@ export default function RegisterScreen() {
     setLoading(true);
     try {
       const newUser = await register({
-        name, email: email.trim().toLowerCase(), password, role,
+        name, email: email.trim().toLowerCase(), password, role, phone,
         college_name: collegeName, state,
         station_name: stationName, badge_number: badgeNumber,
         company_name: companyName,
@@ -122,14 +126,12 @@ export default function RegisterScreen() {
           showsVerticalScrollIndicator={false}
         >
           <Animated.View style={[{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }, { width: "100%" }]}>
-            {/* Back */}
             <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
               <View style={styles.backBtnInner}>
                 <Feather name="arrow-left" size={20} color="#F8FAFC" />
               </View>
             </TouchableOpacity>
 
-            {/* Header */}
             <View style={styles.header}>
               <LinearGradient colors={["#1D4ED8", "#3B82F6", "#06B6D4"]} style={styles.logoGrad}>
                 <MaterialCommunityIcons name="shield-lock" size={28} color="#FFF" />
@@ -140,9 +142,8 @@ export default function RegisterScreen() {
               </View>
             </View>
 
-            {/* Role Selection */}
             <Text style={styles.sectionLabel}>I am joining as</Text>
-            <View style={styles.roleRow}>
+            <View style={styles.roleGrid}>
               {ROLES.map((r) => {
                 const active = role === r.value;
                 return (
@@ -163,17 +164,24 @@ export default function RegisterScreen() {
               })}
             </View>
 
-            {/* Form */}
             <View style={styles.formCard}>
               <LinearGradient colors={["rgba(59,130,246,0.08)", "rgba(6,182,212,0.03)"]} style={StyleSheet.absoluteFill} />
               <InputField label="Full Name *" value={name} onChangeText={setName} icon="user" placeholder="Arjun Sharma" colors={colors} />
               <InputField label="Email *" value={email} onChangeText={setEmail} icon="mail" placeholder="you@example.com" keyboardType="email-address" autoCapitalize="none" colors={colors} />
+              <InputField label="Phone" value={phone} onChangeText={setPhone} icon="phone" placeholder="+91 98765 43210" keyboardType="phone-pad" autoCapitalize="none" colors={colors} />
               <InputField label="Password *" value={password} onChangeText={setPassword} icon="lock" placeholder="Min. 6 characters" secureTextEntry colors={colors} />
 
               {role === "student" && (
                 <>
                   <InputField label="College Name" value={collegeName} onChangeText={setCollegeName} icon="book" placeholder="IIT Delhi" colors={colors} />
                   <InputField label="State" value={state} onChangeText={setState} icon="map-pin" placeholder="Delhi" colors={colors} />
+                </>
+              )}
+
+              {role === "citizen" && (
+                <>
+                  <InputField label="City / District" value={collegeName} onChangeText={setCollegeName} icon="map-pin" placeholder="New Delhi" colors={colors} />
+                  <InputField label="State" value={state} onChangeText={setState} icon="map" placeholder="Delhi" colors={colors} />
                 </>
               )}
 
@@ -231,15 +239,15 @@ const styles = StyleSheet.create({
   title: { color: "#F8FAFC", fontSize: 22, fontFamily: "Inter_700Bold" },
   subtitle: { color: "rgba(255,255,255,0.45)", fontSize: 12, fontFamily: "Inter_400Regular", marginTop: 2 },
   sectionLabel: { color: "#F8FAFC", fontSize: 15, fontFamily: "Inter_600SemiBold", marginBottom: 12 },
-  roleRow: { flexDirection: "row", gap: 10, marginBottom: 20 },
-  roleCard: { flex: 1, padding: 12, borderRadius: 14, alignItems: "center", borderWidth: 1, borderColor: "rgba(255,255,255,0.08)", gap: 6, backgroundColor: "#0F1A2E", overflow: "hidden" },
+  roleGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10, marginBottom: 20 },
+  roleCard: { flexBasis: "47%", flexGrow: 1, padding: 12, borderRadius: 14, alignItems: "center", borderWidth: 1, borderColor: "rgba(255,255,255,0.08)", gap: 6, backgroundColor: "#0F1A2E", overflow: "hidden" },
   roleLabel: { fontSize: 12, textAlign: "center" },
   roleDesc: { fontSize: 9, textAlign: "center", fontFamily: "Inter_400Regular" },
   formCard: { borderRadius: 20, padding: 20, borderWidth: 1, borderColor: "rgba(255,255,255,0.08)", marginBottom: 20, gap: 14, backgroundColor: "#0F1A2E", overflow: "hidden" },
   inputWrap: { flexDirection: "row", alignItems: "center", gap: 10, backgroundColor: "#1E293B", borderRadius: 12, borderWidth: 1, borderColor: "rgba(255,255,255,0.08)", paddingHorizontal: 14, height: 50 },
   inputFocused: { borderColor: "#3B82F6", borderWidth: 1.5 },
   input: { flex: 1, color: "#F8FAFC", fontSize: 15, fontFamily: "Inter_400Regular", height: "100%" },
-  registerBtn: { height: 52, borderRadius: 14, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10, shadowColor: "#3B82F6", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 12, elevation: 8 },
+  registerBtn: { height: 52, borderRadius: 14, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10 },
   registerBtnText: { color: "#FFF", fontSize: 16, fontFamily: "Inter_600SemiBold" },
   loginLink: { alignItems: "center" },
   loginText: { color: "rgba(255,255,255,0.5)", fontSize: 14, fontFamily: "Inter_400Regular" },

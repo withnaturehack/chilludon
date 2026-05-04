@@ -14,6 +14,7 @@ import companiesRouter from "./companies";
 import rakshbotRouter from "./rakshbot";
 import profileRouter from "./profile";
 import notificationsRouter from "./notifications";
+import citizenRouter from "./citizen";
 
 const router: IRouter = Router();
 
@@ -32,5 +33,6 @@ router.use(companiesRouter);
 router.use(rakshbotRouter);
 router.use(profileRouter);
 router.use(notificationsRouter);
+router.use(citizenRouter);
 
 export default router;

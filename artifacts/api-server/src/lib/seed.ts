@@ -19,11 +19,29 @@ async function hashPassword(password: string) {
   return bcrypt.hash(password, 10);
 }
 
+async function ensureCitizenDemo() {
+  const existing = await db.select().from(usersTable).where(eq(usersTable.email, "citizen@cybershield.in"));
+  if (existing.length === 0) {
+    const citizenHash = await hashPassword("Citizen@123");
+    await db.insert(usersTable).values({
+      name: "Sunita Sharma",
+      email: "citizen@cybershield.in",
+      password_hash: citizenHash,
+      role: "citizen",
+      state: "Delhi",
+      is_verified: 1,
+      total_points: 0,
+    });
+    logger.info("Created citizen demo user.");
+  }
+}
+
 export async function seedDatabase() {
   try {
     const existing = await db.select().from(usersTable).limit(1);
     if (existing.length > 0) {
       logger.info("Database already seeded, skipping.");
+      await ensureCitizenDemo();
       return;
     }
 

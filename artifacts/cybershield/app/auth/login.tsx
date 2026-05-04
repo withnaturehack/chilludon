@@ -15,6 +15,7 @@ const DEMO_CREDENTIALS = [
   { label: "Student", email: "arjun@student.in", password: "Student@123", role: "student", color: "#3B82F6" },
   { label: "Police", email: "police@cybershield.in", password: "Police@123", role: "police", color: "#10B981" },
   { label: "Company", email: "company@cybershield.in", password: "Company@123", role: "company", color: "#F59E0B" },
+  { label: "Citizen", email: "citizen@cybershield.in", password: "Citizen@123", role: "citizen", color: "#06B6D4" },
 ];
 
 function navigateByRole(role: string) {
@@ -24,6 +25,8 @@ function navigateByRole(role: string) {
     router.replace("/(police)");
   } else if (role === "company") {
     router.replace("/(company)");
+  } else if (role === "citizen") {
+    router.replace("/(citizen)");
   } else {
     router.replace("/(student)");
   }
@@ -83,7 +86,6 @@ export default function LoginScreen() {
           showsVerticalScrollIndicator={false}
         >
           <Animated.View style={[styles.inner, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
-            {/* Logo */}
             <View style={styles.header}>
               <LinearGradient colors={["#1D4ED8", "#3B82F6", "#06B6D4"]} style={styles.logoGrad}>
                 <MaterialCommunityIcons name="shield-lock" size={36} color="#FFF" />
@@ -92,12 +94,10 @@ export default function LoginScreen() {
               <Text style={styles.subtitle}>National Cybersecurity Platform</Text>
             </View>
 
-            {/* Form Card */}
             <View style={styles.formCard}>
               <LinearGradient colors={["rgba(59,130,246,0.1)", "rgba(6,182,212,0.05)"]} style={StyleSheet.absoluteFill} />
               <Text style={styles.formTitle}>Sign In</Text>
 
-              {/* Email */}
               <View style={[styles.inputWrap, focusedField === "email" && styles.inputFocused]}>
                 <Feather name="mail" size={17} color={focusedField === "email" ? colors.primary : colors.mutedForeground} />
                 <TextInput
@@ -114,7 +114,6 @@ export default function LoginScreen() {
                 />
               </View>
 
-              {/* Password */}
               <View style={[styles.inputWrap, focusedField === "password" && styles.inputFocused]}>
                 <Feather name="lock" size={17} color={focusedField === "password" ? colors.primary : colors.mutedForeground} />
                 <TextInput
@@ -133,7 +132,6 @@ export default function LoginScreen() {
                 </TouchableOpacity>
               </View>
 
-              {/* Login Button */}
               <TouchableOpacity
                 onPress={handleLogin}
                 disabled={loading}
@@ -165,14 +163,13 @@ export default function LoginScreen() {
               </TouchableOpacity>
             </View>
 
-            {/* Demo Access */}
             <View style={styles.demoSection}>
               <View style={styles.dividerRow}>
                 <View style={styles.divider} />
                 <Text style={styles.dividerText}>Quick Demo Access</Text>
                 <View style={styles.divider} />
               </View>
-              <View style={styles.demoRow}>
+              <View style={styles.demoGrid}>
                 {DEMO_CREDENTIALS.map((cred) => (
                   <TouchableOpacity
                     key={cred.role}
@@ -210,15 +207,15 @@ const styles = StyleSheet.create({
   container: { flexGrow: 1, paddingHorizontal: 24, alignItems: "center" },
   inner: { width: "100%", alignItems: "center", gap: 20 },
   header: { alignItems: "center", gap: 12, marginBottom: 4 },
-  logoGrad: { width: 80, height: 80, borderRadius: 22, alignItems: "center", justifyContent: "center", shadowColor: "#3B82F6", shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.5, shadowRadius: 20, elevation: 12 },
+  logoGrad: { width: 80, height: 80, borderRadius: 22, alignItems: "center", justifyContent: "center" },
   title: { color: "#F8FAFC", fontSize: 26, fontFamily: "Inter_700Bold", letterSpacing: 0.3 },
   subtitle: { color: "rgba(255,255,255,0.45)", fontSize: 13, fontFamily: "Inter_400Regular" },
   formCard: { width: "100%", borderRadius: 20, padding: 24, borderWidth: 1, borderColor: "rgba(255,255,255,0.08)", overflow: "hidden", gap: 14, backgroundColor: "#0F1A2E" },
   formTitle: { color: "#F8FAFC", fontSize: 20, fontFamily: "Inter_700Bold", marginBottom: 4 },
   inputWrap: { flexDirection: "row", alignItems: "center", gap: 10, backgroundColor: "#1E293B", borderRadius: 13, borderWidth: 1, borderColor: "rgba(255,255,255,0.08)", paddingHorizontal: 16, height: 54 },
-  inputFocused: { borderColor: "#3B82F6", borderWidth: 1.5, shadowColor: "#3B82F6", shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.25, shadowRadius: 8 },
+  inputFocused: { borderColor: "#3B82F6", borderWidth: 1.5 },
   input: { flex: 1, color: "#F8FAFC", fontSize: 15, fontFamily: "Inter_400Regular", height: "100%" },
-  loginBtn: { height: 54, borderRadius: 14, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10, shadowColor: "#3B82F6", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 12, elevation: 8 },
+  loginBtn: { height: 54, borderRadius: 14, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10 },
   loginBtnText: { color: "#FFF", fontSize: 16, fontFamily: "Inter_600SemiBold" },
   registerLink: { alignItems: "center" },
   registerText: { color: "rgba(255,255,255,0.5)", fontSize: 14, fontFamily: "Inter_400Regular" },
@@ -226,8 +223,8 @@ const styles = StyleSheet.create({
   dividerRow: { flexDirection: "row", alignItems: "center", gap: 12 },
   divider: { flex: 1, height: 1, backgroundColor: "rgba(255,255,255,0.08)" },
   dividerText: { color: "rgba(255,255,255,0.35)", fontSize: 12, fontFamily: "Inter_400Regular" },
-  demoRow: { flexDirection: "row", gap: 10 },
-  demoBtn: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, paddingVertical: 12, borderRadius: 12, borderWidth: 1, backgroundColor: "rgba(255,255,255,0.03)" },
+  demoGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
+  demoBtn: { flexBasis: "47%", flexGrow: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, paddingVertical: 12, borderRadius: 12, borderWidth: 1, backgroundColor: "rgba(255,255,255,0.03)" },
   demoDot: { width: 6, height: 6, borderRadius: 3 },
   demoBtnLabel: { fontSize: 13 },
   features: { flexDirection: "row", flexWrap: "wrap", gap: 12, justifyContent: "center" },

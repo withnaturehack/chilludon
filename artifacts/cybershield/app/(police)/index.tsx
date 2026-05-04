@@ -2,6 +2,7 @@ import React, { useRef, useEffect } from "react";
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Platform, Alert, Animated } from "react-native";
 import { useQuery } from "@tanstack/react-query";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { router } from "expo-router";
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useColors } from "@/hooks/useColors";
@@ -66,7 +67,7 @@ export default function PoliceDashboard() {
             <TouchableOpacity
               onPress={() => Alert.alert("Logout", "Are you sure?", [
                 { text: "Cancel", style: "cancel" },
-                { text: "Logout", style: "destructive", onPress: logout },
+                { text: "Logout", style: "destructive", onPress: () => { logout(); router.replace("/auth/login"); } },
               ])}
               style={styles.logoutBtn}
             >

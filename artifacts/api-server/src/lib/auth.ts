@@ -53,3 +53,21 @@ export function requireRole(...roles: string[]) {
     next();
   };
 }
+
+export async function optionalAuthMiddleware(req: Request, res: Response, next: NextFunction) {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader?.startsWith("Bearer ")) {
+      next();
+      return;
+    }
+    const token = authHeader.slice(7);
+    const decoded = verifyToken(token);
+    const [user] = await db.select().from(usersTable).where(eq(usersTable.id, decoded.userId));
+    if (user && !user.is_banned) {
+      (req as any).user = user;
+    }
+  } catch {
+  }
+  next();
+}
