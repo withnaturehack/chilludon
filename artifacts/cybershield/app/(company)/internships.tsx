@@ -1,12 +1,13 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
-  Modal, TextInput, Alert, ActivityIndicator, Platform,
+  Modal, TextInput, Alert, ActivityIndicator, Platform, ScrollView, Animated,
 } from "react-native";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Feather } from "@expo/vector-icons";
+import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
+import { LinearGradient } from "expo-linear-gradient";
 import { useColors } from "@/hooks/useColors";
 import { useApi } from "@/hooks/useApi";
 
@@ -26,9 +27,15 @@ export default function CompanyInternshipsScreen() {
   const [seats, setSeats] = useState("5");
   const isWeb = Platform.OS === "web";
   const topPad = insets.top + (isWeb ? 16 : 0);
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.timing(fadeAnim, { toValue: 1, duration: 600, useNativeDriver: true }).start();
+  }, []);
 
   const { data, isLoading, refetch } = useQuery({
-    queryKey: ["internships-company"], queryFn: () => apiFetch("/internships"),
+    queryKey: ["internships-company"],
+    queryFn: () => apiFetch("/internships"),
   });
 
   const postMutation = useMutation({
@@ -46,29 +53,42 @@ export default function CompanyInternshipsScreen() {
       qc.invalidateQueries({ queryKey: ["internships-company"] });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       setShowForm(false);
-      Alert.alert("Posted!", "Your internship has been posted successfully.");
+      setTitle(""); setDescription(""); setRequirements(""); setDuration(""); setLocationCity(""); setStipend(""); setSeats("5");
+      Alert.alert("🎉 Posted!", "Your internship is now live on CyberShield India.");
     },
     onError: (err: any) => Alert.alert("Error", err.message),
   });
 
-  return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={[styles.header, { paddingTop: topPad + 12, borderBottomColor: colors.border }]}>
-        <Text style={[styles.title, { color: colors.foreground, fontFamily: "Inter_700Bold" }]}>Internships</Text>
-        <Text style={[styles.subtitle, { color: colors.mutedForeground, fontFamily: "Inter_400Regular" }]}>
-          Find cyber talent from India's top institutions
-        </Text>
-        <TouchableOpacity
-          style={[styles.postBtn, { backgroundColor: colors.primary }]}
-          onPress={() => setShowForm(true)}
-        >
-          <Feather name="plus" size={18} color="#FFF" />
-          <Text style={[styles.postBtnText, { fontFamily: "Inter_600SemiBold" }]}>Post Internship</Text>
-        </TouchableOpacity>
-      </View>
+  const LOC_TYPES = [
+    { value: "remote", label: "Remote", icon: "wifi" },
+    { value: "onsite", label: "Onsite", icon: "map-pin" },
+    { value: "hybrid", label: "Hybrid", icon: "layers" },
+  ];
 
-      {isLoading ? <ActivityIndicator color={colors.primary} style={{ marginTop: 40 }} /> : (
-        <FlatList
+  return (
+    <LinearGradient colors={["#060D1A", "#0B1120"]} style={{ flex: 1 }}>
+      <LinearGradient colors={["#0A1A30", "#112244", "#0B1120"]} style={[styles.header, { paddingTop: topPad + 12 }]}>
+        <View style={styles.headerRow}>
+          <View>
+            <Text style={styles.headerTitle}>Internships</Text>
+            <Text style={styles.headerSub}>Find India's best cyber talent</Text>
+          </View>
+          <TouchableOpacity onPress={() => setShowForm(true)} activeOpacity={0.85}>
+            <LinearGradient colors={["#059669", "#10B981"]} style={styles.postBtn}>
+              <Feather name="plus" size={18} color="#FFF" />
+              <Text style={styles.postBtnText}>Post New</Text>
+            </LinearGradient>
+          </TouchableOpacity>
+        </View>
+      </LinearGradient>
+
+      {isLoading ? (
+        <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+          <ActivityIndicator color="#3B82F6" size="large" />
+        </View>
+      ) : (
+        <Animated.FlatList
+          style={{ opacity: fadeAnim }}
           data={data?.internships || []}
           keyExtractor={item => item.id}
           contentContainerStyle={{ padding: 16, gap: 12, paddingBottom: insets.bottom + 90 }}
@@ -76,128 +96,162 @@ export default function CompanyInternshipsScreen() {
           onRefresh={refetch}
           refreshing={false}
           renderItem={({ item }) => (
-            <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
-              <View style={styles.cardHeader}>
-                <Text style={[styles.orgName, { color: colors.primary, fontFamily: "Inter_600SemiBold" }]}>{item.org_name}</Text>
-                <View style={[styles.statusBadge, { backgroundColor: "#10B981" + "20" }]}>
-                  <Text style={[styles.statusText, { color: "#10B981", fontFamily: "Inter_600SemiBold" }]}>OPEN</Text>
+            <View style={styles.card}>
+              <LinearGradient colors={["rgba(16,185,129,0.05)", "transparent"]} style={StyleSheet.absoluteFill} />
+              <View style={styles.cardTop}>
+                <Text style={styles.orgName}>{item.org_name}</Text>
+                <View style={styles.openBadge}>
+                  <View style={styles.openDot} />
+                  <Text style={styles.openText}>OPEN</Text>
                 </View>
               </View>
-              <Text style={[styles.cardTitle, { color: colors.foreground, fontFamily: "Inter_700Bold" }]}>{item.title}</Text>
+              <Text style={styles.cardTitle}>{item.title}</Text>
               <View style={styles.metaRow}>
                 <View style={styles.metaItem}>
-                  <Feather name="map-pin" size={12} color={colors.mutedForeground} />
-                  <Text style={[styles.metaText, { color: colors.mutedForeground, fontFamily: "Inter_400Regular" }]}>
-                    {item.location_type}
-                  </Text>
+                  <Feather name="map-pin" size={12} color="rgba(255,255,255,0.35)" />
+                  <Text style={styles.metaText}>{item.location_type}</Text>
                 </View>
+                {item.duration_months && (
+                  <View style={styles.metaItem}>
+                    <Feather name="clock" size={12} color="rgba(255,255,255,0.35)" />
+                    <Text style={styles.metaText}>{item.duration_months} months</Text>
+                  </View>
+                )}
                 <View style={styles.metaItem}>
-                  <Feather name="users" size={12} color={colors.mutedForeground} />
-                  <Text style={[styles.metaText, { color: colors.mutedForeground, fontFamily: "Inter_400Regular" }]}>
-                    {item.filled_seats}/{item.total_seats} seats
-                  </Text>
+                  <Feather name="users" size={12} color="rgba(255,255,255,0.35)" />
+                  <Text style={styles.metaText}>{item.filled_seats}/{item.total_seats} seats</Text>
                 </View>
                 {item.stipend_amount && (
-                  <Text style={[styles.stipend, { color: "#10B981", fontFamily: "Inter_700Bold" }]}>
-                    ₹{item.stipend_amount?.toLocaleString()}/mo
-                  </Text>
+                  <Text style={styles.stipend}>₹{item.stipend_amount?.toLocaleString("en-IN")}/mo</Text>
                 )}
               </View>
             </View>
           )}
+          ListEmptyComponent={
+            <View style={{ alignItems: "center", paddingTop: 60, gap: 16 }}>
+              <Feather name="briefcase" size={64} color="rgba(255,255,255,0.06)" />
+              <Text style={{ color: "rgba(255,255,255,0.3)", fontSize: 16, fontFamily: "Inter_400Regular" }}>No internships posted</Text>
+              <TouchableOpacity onPress={() => setShowForm(true)} activeOpacity={0.85}>
+                <LinearGradient colors={["#059669", "#10B981"]} style={{ paddingHorizontal: 24, paddingVertical: 14, borderRadius: 14 }}>
+                  <Text style={{ color: "#FFF", fontSize: 15, fontFamily: "Inter_600SemiBold" }}>Post First Internship</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            </View>
+          }
         />
       )}
 
       {/* Post Form Modal */}
-      <Modal visible={showForm} transparent animationType="slide">
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modal, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <View style={styles.modalHeader}>
-              <Text style={[styles.modalTitle, { color: colors.foreground, fontFamily: "Inter_700Bold" }]}>Post Internship</Text>
-              <TouchableOpacity onPress={() => setShowForm(false)}>
-                <Feather name="x" size={22} color={colors.mutedForeground} />
-              </TouchableOpacity>
-            </View>
-
-            {[
-              { label: "Title *", value: title, set: setTitle, placeholder: "Security Analyst Intern" },
-              { label: "Description", value: description, set: setDescription, placeholder: "Role description...", multi: true },
-              { label: "Requirements", value: requirements, set: setRequirements, placeholder: "Skills required..." },
-              { label: "Duration (months)", value: duration, set: setDuration, placeholder: "3", keyboard: "numeric" as any },
-              { label: "City", value: locationCity, set: setLocationCity, placeholder: "Bangalore" },
-              { label: "Stipend (₹/month)", value: stipend, set: setStipend, placeholder: "20000", keyboard: "numeric" as any },
-              { label: "Total Seats", value: seats, set: setSeats, placeholder: "5", keyboard: "numeric" as any },
-            ].map(f => (
-              <View key={f.label}>
-                <Text style={[styles.inputLabel, { color: colors.mutedForeground, fontFamily: "Inter_500Medium" }]}>{f.label}</Text>
-                <TextInput
-                  style={[styles.input, { backgroundColor: colors.muted, borderColor: colors.border, color: colors.foreground, fontFamily: "Inter_400Regular" }, f.multi ? { minHeight: 70 } : {}]}
-                  placeholder={f.placeholder}
-                  placeholderTextColor={colors.mutedForeground}
-                  value={f.value}
-                  onChangeText={f.set}
-                  keyboardType={f.keyboard}
-                  multiline={f.multi}
-                  textAlignVertical={f.multi ? "top" : "auto"}
-                />
-              </View>
-            ))}
-
-            {/* Location type */}
-            <View style={styles.typeRow}>
-              {["remote", "onsite", "hybrid"].map(t => (
-                <TouchableOpacity
-                  key={t}
-                  style={[styles.typeBtn, { backgroundColor: locationType === t ? colors.primary : colors.muted, borderColor: locationType === t ? colors.primary : colors.border }]}
-                  onPress={() => setLocationType(t)}
-                >
-                  <Text style={[styles.typeText, { color: locationType === t ? "#FFF" : colors.foreground, fontFamily: "Inter_500Medium" }]}>{t}</Text>
+      <Modal visible={showForm} transparent animationType="slide" onRequestClose={() => setShowForm(false)}>
+        <TouchableOpacity style={styles.overlay} activeOpacity={1} onPress={() => setShowForm(false)} />
+        <View style={styles.modal}>
+          <LinearGradient colors={["#0F1A2E", "#0B1120"]} style={{ flex: 1, borderTopLeftRadius: 24, borderTopRightRadius: 24, overflow: "hidden" }}>
+            <LinearGradient colors={["rgba(16,185,129,0.1)", "transparent"]} style={{ padding: 20, paddingBottom: 14 }}>
+              <View style={styles.modalHdr}>
+                <Text style={styles.modalTitle}>Post Internship</Text>
+                <TouchableOpacity style={styles.closeBtn} onPress={() => setShowForm(false)}>
+                  <Feather name="x" size={18} color="rgba(255,255,255,0.6)" />
                 </TouchableOpacity>
+              </View>
+            </LinearGradient>
+            <ScrollView contentContainerStyle={{ padding: 20, gap: 14 }} showsVerticalScrollIndicator={false}>
+              {[
+                { label: "Job Title *", value: title, set: setTitle, placeholder: "Security Analyst Intern", key: "num" },
+                { label: "Description", value: description, set: setDescription, placeholder: "Role description and responsibilities...", multi: true, key: "none" },
+                { label: "Requirements", value: requirements, set: setRequirements, placeholder: "Required skills (e.g., Python, Kali Linux)", key: "none" },
+                { label: "Duration (months)", value: duration, set: setDuration, placeholder: "3", kb: "numeric" as any, key: "none" },
+                { label: "City", value: locationCity, set: setLocationCity, placeholder: "Bangalore, Mumbai...", key: "none" },
+                { label: "Monthly Stipend (₹)", value: stipend, set: setStipend, placeholder: "20000", kb: "numeric" as any, key: "none" },
+                { label: "Total Seats", value: seats, set: setSeats, placeholder: "5", kb: "numeric" as any, key: "none" },
+              ].map(f => (
+                <View key={f.label}>
+                  <Text style={styles.inputLabel}>{f.label}</Text>
+                  <TextInput
+                    style={[styles.inputField, (f as any).multi && { minHeight: 70, textAlignVertical: "top" }]}
+                    placeholder={f.placeholder}
+                    placeholderTextColor="rgba(255,255,255,0.2)"
+                    value={f.value}
+                    onChangeText={f.set}
+                    keyboardType={(f as any).kb}
+                    multiline={(f as any).multi}
+                  />
+                </View>
               ))}
-            </View>
 
-            <TouchableOpacity
-              style={[styles.submitBtn, { backgroundColor: colors.primary }]}
-              onPress={() => { if (!title) { Alert.alert("Error", "Title is required"); return; } postMutation.mutate(); }}
-              disabled={postMutation.isPending}
-            >
-              <Text style={[styles.submitBtnText, { fontFamily: "Inter_600SemiBold" }]}>
-                {postMutation.isPending ? "Posting..." : "Post Internship"}
-              </Text>
-            </TouchableOpacity>
-          </View>
+              {/* Location Type */}
+              <View>
+                <Text style={styles.inputLabel}>Location Type</Text>
+                <View style={styles.locTypeRow}>
+                  {LOC_TYPES.map(lt => (
+                    <TouchableOpacity
+                      key={lt.value}
+                      style={[styles.locTypeBtn, locationType === lt.value && styles.locTypeBtnActive]}
+                      onPress={() => { setLocationType(lt.value); Haptics.selectionAsync(); }}
+                      activeOpacity={0.75}
+                    >
+                      {locationType === lt.value && <LinearGradient colors={["#059669", "#10B981"]} style={StyleSheet.absoluteFill} />}
+                      <Feather name={lt.icon as any} size={14} color={locationType === lt.value ? "#FFF" : "rgba(255,255,255,0.4)"} />
+                      <Text style={[styles.locTypeBtnText, locationType === lt.value && { color: "#FFF" }]}>{lt.label}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+
+              <TouchableOpacity
+                onPress={() => {
+                  if (!title.trim()) { Alert.alert("Error", "Title is required"); return; }
+                  postMutation.mutate();
+                }}
+                disabled={postMutation.isPending}
+                activeOpacity={0.85}
+              >
+                <LinearGradient
+                  colors={postMutation.isPending ? ["#334155", "#334155"] : ["#059669", "#10B981"]}
+                  style={styles.submitBtn}
+                >
+                  <Feather name="send" size={18} color="#FFF" />
+                  <Text style={styles.submitBtnText}>
+                    {postMutation.isPending ? "Posting..." : "Post Internship"}
+                  </Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            </ScrollView>
+          </LinearGradient>
         </View>
       </Modal>
-    </View>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  header: { paddingHorizontal: 20, paddingBottom: 16, borderBottomWidth: 1, paddingTop: 16 },
-  title: { fontSize: 22 },
-  subtitle: { fontSize: 13, marginTop: 2, marginBottom: 12 },
-  postBtn: { flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 16, paddingVertical: 10, borderRadius: 12, alignSelf: "flex-start" },
-  postBtnText: { color: "#FFF", fontSize: 14 },
-  card: { borderRadius: 16, padding: 14, borderWidth: 1, gap: 8 },
-  cardHeader: { flexDirection: "row", justifyContent: "space-between" },
-  orgName: { fontSize: 13 },
-  statusBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 },
-  statusText: { fontSize: 10 },
-  cardTitle: { fontSize: 15 },
-  metaRow: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
+  header: { paddingHorizontal: 20, paddingBottom: 20 },
+  headerRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" },
+  headerTitle: { color: "#F8FAFC", fontSize: 22, fontFamily: "Inter_700Bold" },
+  headerSub: { color: "rgba(255,255,255,0.45)", fontSize: 12, fontFamily: "Inter_400Regular", marginTop: 3 },
+  postBtn: { flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 16, paddingVertical: 11, borderRadius: 14 },
+  postBtnText: { color: "#FFF", fontSize: 14, fontFamily: "Inter_600SemiBold" },
+  card: { backgroundColor: "#0F1A2E", borderRadius: 18, padding: 16, borderWidth: 1, borderColor: "rgba(255,255,255,0.06)", gap: 10, overflow: "hidden" },
+  cardTop: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  orgName: { color: "#06B6D4", fontSize: 13, fontFamily: "Inter_600SemiBold" },
+  openBadge: { flexDirection: "row", alignItems: "center", gap: 5, backgroundColor: "rgba(16,185,129,0.15)", paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20 },
+  openDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: "#10B981" },
+  openText: { color: "#10B981", fontSize: 10, fontFamily: "Inter_700Bold" },
+  cardTitle: { color: "#F8FAFC", fontSize: 15, fontFamily: "Inter_700Bold" },
+  metaRow: { flexDirection: "row", flexWrap: "wrap", gap: 10, alignItems: "center" },
   metaItem: { flexDirection: "row", alignItems: "center", gap: 4 },
-  metaText: { fontSize: 12 },
-  stipend: { fontSize: 14 },
-  modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.5)", justifyContent: "flex-end" },
-  modal: { borderTopLeftRadius: 24, borderTopRightRadius: 24, borderWidth: 1, padding: 20, gap: 10, maxHeight: "90%" },
-  modalHeader: { flexDirection: "row", justifyContent: "space-between" },
-  modalTitle: { fontSize: 18 },
-  inputLabel: { fontSize: 12, marginBottom: 4 },
-  input: { borderRadius: 10, borderWidth: 1, paddingHorizontal: 12, height: 46, fontSize: 14, marginBottom: 4 },
-  typeRow: { flexDirection: "row", gap: 8 },
-  typeBtn: { flex: 1, paddingVertical: 8, borderRadius: 8, borderWidth: 1, alignItems: "center" },
-  typeText: { fontSize: 13 },
-  submitBtn: { height: 50, borderRadius: 12, alignItems: "center", justifyContent: "center" },
-  submitBtnText: { color: "#FFF", fontSize: 16 },
+  metaText: { color: "rgba(255,255,255,0.4)", fontSize: 12, fontFamily: "Inter_400Regular" },
+  stipend: { color: "#10B981", fontSize: 14, fontFamily: "Inter_700Bold" },
+  overlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.6)" },
+  modal: { maxHeight: "90%", backgroundColor: "#0F1A2E", borderTopLeftRadius: 24, borderTopRightRadius: 24 },
+  modalHdr: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  modalTitle: { color: "#F8FAFC", fontSize: 20, fontFamily: "Inter_700Bold" },
+  closeBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: "rgba(255,255,255,0.08)", alignItems: "center", justifyContent: "center" },
+  inputLabel: { color: "rgba(255,255,255,0.45)", fontSize: 12, fontFamily: "Inter_600SemiBold", marginBottom: 6 },
+  inputField: { backgroundColor: "#1E293B", borderRadius: 12, borderWidth: 1, borderColor: "rgba(255,255,255,0.08)", paddingHorizontal: 14, paddingVertical: 12, color: "#F8FAFC", fontSize: 15, fontFamily: "Inter_400Regular" },
+  locTypeRow: { flexDirection: "row", gap: 10 },
+  locTypeBtn: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, paddingVertical: 11, borderRadius: 12, borderWidth: 1, borderColor: "rgba(255,255,255,0.08)", backgroundColor: "rgba(255,255,255,0.03)", overflow: "hidden" },
+  locTypeBtnActive: { borderColor: "#10B981" },
+  locTypeBtnText: { color: "rgba(255,255,255,0.4)", fontSize: 13, fontFamily: "Inter_500Medium" },
+  submitBtn: { height: 54, borderRadius: 14, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10 },
+  submitBtnText: { color: "#FFF", fontSize: 16, fontFamily: "Inter_600SemiBold" },
 });

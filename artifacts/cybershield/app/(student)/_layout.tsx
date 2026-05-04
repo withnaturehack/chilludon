@@ -1,81 +1,104 @@
 import React from "react";
 import { Tabs } from "expo-router";
-import { BlurView } from "expo-blur";
-import { Platform, StyleSheet, View, useColorScheme } from "react-native";
+import { Platform, View } from "react-native";
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
+import { LinearGradient } from "expo-linear-gradient";
 
 export default function StudentLayout() {
   const colors = useColors();
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === "dark";
-  const isIOS = Platform.OS === "ios";
   const isWeb = Platform.OS === "web";
 
   return (
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.mutedForeground,
+        tabBarInactiveTintColor: "rgba(255,255,255,0.35)",
         headerShown: false,
         tabBarStyle: {
           position: "absolute",
-          backgroundColor: isIOS ? "transparent" : colors.background,
-          borderTopWidth: 1,
-          borderTopColor: colors.border,
+          backgroundColor: "transparent",
+          borderTopWidth: 0,
           elevation: 0,
-          height: isWeb ? 84 : 72,
+          height: isWeb ? 84 : 76,
         },
-        tabBarBackground: () =>
-          isIOS ? (
-            <BlurView
-              intensity={80}
-              tint={isDark ? "dark" : "light"}
-              style={StyleSheet.absoluteFill}
-            />
-          ) : isWeb ? (
-            <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.background }]} />
-          ) : null,
+        tabBarBackground: () => (
+          <LinearGradient
+            colors={["rgba(6,13,26,0.95)", "#060D1A"]}
+            style={[{ flex: 1, borderTopWidth: 1, borderTopColor: "rgba(255,255,255,0.06)" }]}
+          />
+        ),
         tabBarLabelStyle: {
           fontSize: 10,
           fontFamily: "Inter_500Medium",
-          marginBottom: 4,
+          marginBottom: 6,
         },
+        tabBarIconStyle: { marginTop: 4 },
       }}
     >
       <Tabs.Screen
         name="index"
         options={{
-          title: "Dashboard",
-          tabBarIcon: ({ color }) => <Feather name="home" size={22} color={color} />,
+          title: "Home",
+          tabBarIcon: ({ color, focused }) => (
+            focused
+              ? <View style={{ backgroundColor: colors.primary + "25", borderRadius: 8, padding: 4 }}>
+                  <Feather name="home" size={20} color={color} />
+                </View>
+              : <Feather name="home" size={20} color={color} />
+          ),
         }}
       />
       <Tabs.Screen
         name="submit"
         options={{
           title: "Submit",
-          tabBarIcon: ({ color }) => <Feather name="upload" size={22} color={color} />,
+          tabBarIcon: ({ color, focused }) => (
+            focused
+              ? <View style={{ backgroundColor: colors.primary + "25", borderRadius: 8, padding: 4 }}>
+                  <Feather name="upload" size={20} color={color} />
+                </View>
+              : <Feather name="upload" size={20} color={color} />
+          ),
         }}
       />
       <Tabs.Screen
         name="ctf"
         options={{
           title: "CTF",
-          tabBarIcon: ({ color }) => <MaterialCommunityIcons name="flag-outline" size={22} color={color} />,
+          tabBarIcon: ({ color, focused }) => (
+            focused
+              ? <View style={{ backgroundColor: colors.primary + "25", borderRadius: 8, padding: 4 }}>
+                  <MaterialCommunityIcons name="flag" size={20} color={color} />
+                </View>
+              : <MaterialCommunityIcons name="flag-outline" size={20} color={color} />
+          ),
         }}
       />
       <Tabs.Screen
         name="rakshbot"
         options={{
           title: "RakshBot",
-          tabBarIcon: ({ color }) => <MaterialCommunityIcons name="robot-outline" size={22} color={color} />,
+          tabBarIcon: ({ color, focused }) => (
+            focused
+              ? <View style={{ backgroundColor: colors.primary + "25", borderRadius: 8, padding: 4 }}>
+                  <MaterialCommunityIcons name="robot" size={20} color={color} />
+                </View>
+              : <MaterialCommunityIcons name="robot-outline" size={20} color={color} />
+          ),
         }}
       />
       <Tabs.Screen
         name="more"
         options={{
           title: "More",
-          tabBarIcon: ({ color }) => <Feather name="menu" size={22} color={color} />,
+          tabBarIcon: ({ color, focused }) => (
+            focused
+              ? <View style={{ backgroundColor: colors.primary + "25", borderRadius: 8, padding: 4 }}>
+                  <Feather name="grid" size={20} color={color} />
+                </View>
+              : <Feather name="grid" size={20} color={color} />
+          ),
         }}
       />
     </Tabs>

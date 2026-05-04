@@ -1,12 +1,14 @@
-import React, { useState, useRef, useCallback } from "react";
+import React, { useState, useRef, useCallback, useEffect } from "react";
 import {
   View, Text, FlatList, TextInput, TouchableOpacity,
   StyleSheet, ActivityIndicator, Platform, KeyboardAvoidingView,
+  Animated,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { MaterialCommunityIcons, Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
+import { LinearGradient } from "expo-linear-gradient";
 import { useColors } from "@/hooks/useColors";
 import { useApi } from "@/hooks/useApi";
 
@@ -18,11 +20,12 @@ interface Message {
 }
 
 const QUICK_PROMPTS = [
-  "How do I start bug bounty hunting?",
+  "How do I start bug bounty?",
   "What is SQL injection?",
   "Explain XSS vulnerability",
-  "How to improve my rank?",
-  "What should I learn today?",
+  "Best tools for OSINT?",
+  "How to get better rank?",
+  "Explain OWASP Top 10",
 ];
 
 export default function RakshBotScreen() {
@@ -34,11 +37,23 @@ export default function RakshBotScreen() {
   const [localMessages, setLocalMessages] = useState<Message[]>([]);
   const flatRef = useRef<FlatList>(null);
   const isWeb = Platform.OS === "web";
+  const pulseAnim = useRef(new Animated.Value(1)).current;
 
   const { data, isLoading } = useQuery({
     queryKey: ["rakshbot-history"],
     queryFn: () => apiFetch("/rakshbot/history?limit=50"),
   });
+
+  useEffect(() => {
+    const pulse = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnim, { toValue: 1.15, duration: 800, useNativeDriver: true }),
+        Animated.timing(pulseAnim, { toValue: 1, duration: 800, useNativeDriver: true }),
+      ])
+    );
+    pulse.start();
+    return () => pulse.stop();
+  }, []);
 
   const allMessages: Message[] = [...(data?.messages || []), ...localMessages];
 
@@ -56,6 +71,7 @@ export default function RakshBotScreen() {
       created_at: new Date().toISOString(),
     };
     setLocalMessages(prev => [...prev, userMsg]);
+    setTimeout(() => flatRef.current?.scrollToEnd({ animated: true }), 100);
 
     try {
       const res = await apiFetch("/rakshbot/chat", {
@@ -71,192 +87,198 @@ export default function RakshBotScreen() {
       setLocalMessages(prev => [...prev, botMsg]);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch {
-      const errMsg: Message = {
+      setLocalMessages(prev => [...prev, {
         id: (Date.now() + 1).toString(),
         role: "assistant",
-        content: "Sorry yaar, kuch problem aa gayi. Please try again!",
+        content: "Yaar, kuch problem aa gayi. Network check karo aur phir try karo! 🙏",
         created_at: new Date().toISOString(),
-      };
-      setLocalMessages(prev => [...prev, errMsg]);
+      }]);
     } finally {
       setSending(false);
+      setTimeout(() => flatRef.current?.scrollToEnd({ animated: true }), 100);
     }
   }
 
   const topPad = insets.top + (isWeb ? 16 : 0);
 
-  const renderItem = useCallback(({ item }: { item: Message }) => {
+  const renderItem = useCallback(({ item, index }: { item: Message; index: number }) => {
     const isBot = item.role === "assistant";
     return (
       <View style={[styles.msgRow, isBot ? styles.botRow : styles.userRow]}>
         {isBot && (
-          <View style={[styles.botAvatar, { backgroundColor: colors.primary }]}>
-            <MaterialCommunityIcons name="robot" size={16} color="#FFF" />
-          </View>
+          <LinearGradient colors={["#1D4ED8", "#3B82F6"]} style={styles.botAvatar}>
+            <MaterialCommunityIcons name="robot" size={14} color="#FFF" />
+          </LinearGradient>
         )}
-        <View style={[
-          styles.bubble,
-          isBot
-            ? [styles.botBubble, { backgroundColor: colors.card, borderColor: colors.border }]
-            : [styles.userBubble, { backgroundColor: colors.primary }],
-        ]}>
-          <Text style={[
-            styles.bubbleText,
-            { color: isBot ? colors.foreground : "#FFF", fontFamily: "Inter_400Regular" },
-          ]}>
+        <View style={[styles.bubble, isBot ? styles.botBubble : styles.userBubble]}>
+          {isBot && <LinearGradient colors={["rgba(59,130,246,0.08)", "rgba(6,182,212,0.05)"]} style={StyleSheet.absoluteFill} />}
+          {isBot && !item.content && <ActivityIndicator size="small" color="#3B82F6" />}
+          <Text style={[styles.bubbleText, { color: isBot ? "#F8FAFC" : "#FFF" }]}>
             {item.content}
           </Text>
-          <Text style={[styles.timeText, { color: isBot ? colors.mutedForeground : "rgba(255,255,255,0.6)" }]}>
+          <Text style={[styles.timeText, { color: isBot ? "rgba(255,255,255,0.35)" : "rgba(255,255,255,0.55)" }]}>
             {new Date(item.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
           </Text>
         </View>
       </View>
     );
-  }, [colors]);
+  }, []);
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1, backgroundColor: colors.background }}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-    >
-      {/* Header */}
-      <View style={[styles.header, { paddingTop: topPad + 12, backgroundColor: colors.primary }]}>
-        <View style={styles.headerContent}>
-          <View style={styles.botInfo}>
-            <View style={[styles.botIconBg, { backgroundColor: "rgba(255,255,255,0.2)" }]}>
-              <MaterialCommunityIcons name="robot" size={24} color="#FFF" />
-            </View>
-            <View>
-              <Text style={[styles.botName, { fontFamily: "Inter_700Bold" }]}>RakshBot</Text>
+    <LinearGradient colors={["#060D1A", "#0B1120"]} style={{ flex: 1 }}>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : "height"}>
+        {/* Header */}
+        <LinearGradient colors={["#0F2040", "#1A3A6B", "#0B1120"]} style={[styles.header, { paddingTop: topPad + 12 }]}>
+          <View style={styles.headerContent}>
+            <LinearGradient colors={["#1D4ED8", "#3B82F6"]} style={styles.botIconBg}>
+              <MaterialCommunityIcons name="robot" size={22} color="#FFF" />
+            </LinearGradient>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.botName}>RakshBot</Text>
               <View style={styles.onlineRow}>
-                <View style={[styles.onlineDot, { backgroundColor: "#10B981" }]} />
-                <Text style={[styles.onlineText, { fontFamily: "Inter_400Regular" }]}>AI Mentor · Hinglish</Text>
+                <Animated.View style={[styles.onlineDot, { transform: [{ scale: pulseAnim }] }]} />
+                <Text style={styles.onlineText}>AI Mentor · Powered by Claude AI</Text>
               </View>
+            </View>
+            <View style={styles.headerBadge}>
+              <MaterialCommunityIcons name="brain" size={14} color="#06B6D4" />
+              <Text style={styles.headerBadgeText}>AI</Text>
             </View>
           </View>
-        </View>
-      </View>
+        </LinearGradient>
 
-      {/* Messages */}
-      {isLoading ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator color={colors.primary} />
-        </View>
-      ) : (
-        <FlatList
-          ref={flatRef}
-          data={allMessages}
-          renderItem={renderItem}
-          keyExtractor={item => item.id}
-          contentContainerStyle={[styles.messageList, { paddingBottom: 10 }]}
-          showsVerticalScrollIndicator={false}
-          onContentSizeChange={() => flatRef.current?.scrollToEnd({ animated: true })}
-          ListEmptyComponent={
-            <View style={styles.emptyContainer}>
-              <MaterialCommunityIcons name="robot-outline" size={64} color={colors.mutedForeground} />
-              <Text style={[styles.emptyTitle, { color: colors.foreground, fontFamily: "Inter_700Bold" }]}>
-                Namaste! Main RakshBot hun
-              </Text>
-              <Text style={[styles.emptySubtitle, { color: colors.mutedForeground, fontFamily: "Inter_400Regular" }]}>
-                Your personal AI cybersecurity mentor. Ask me anything!
-              </Text>
-            </View>
-          }
-          ListFooterComponent={sending ? (
-            <View style={[styles.msgRow, styles.botRow]}>
-              <View style={[styles.botAvatar, { backgroundColor: colors.primary }]}>
-                <MaterialCommunityIcons name="robot" size={16} color="#FFF" />
-              </View>
-              <View style={[styles.bubble, styles.botBubble, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                <ActivityIndicator size="small" color={colors.primary} />
-              </View>
-            </View>
-          ) : null}
-        />
-      )}
-
-      {/* Quick prompts */}
-      {allMessages.length === 0 && !isLoading && (
-        <View style={styles.quickPromptsContainer}>
-          <Text style={[styles.quickPromptsTitle, { color: colors.mutedForeground, fontFamily: "Inter_500Medium" }]}>
-            Try asking:
-          </Text>
+        {/* Messages */}
+        {isLoading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator color="#3B82F6" size="large" />
+            <Text style={{ color: "rgba(255,255,255,0.4)", fontSize: 13, fontFamily: "Inter_400Regular", marginTop: 12 }}>
+              Loading conversation...
+            </Text>
+          </View>
+        ) : (
           <FlatList
-            horizontal
-            data={QUICK_PROMPTS}
-            keyExtractor={(item) => item}
-            renderItem={({ item }) => (
-              <TouchableOpacity
-                style={[styles.quickPrompt, { backgroundColor: colors.card, borderColor: colors.border }]}
-                onPress={() => sendMessage(item)}
-              >
-                <Text style={[styles.quickPromptText, { color: colors.foreground, fontFamily: "Inter_400Regular" }]}>
-                  {item}
+            ref={flatRef}
+            data={allMessages}
+            renderItem={renderItem}
+            keyExtractor={item => item.id}
+            contentContainerStyle={[styles.messageList, { paddingBottom: 12 }]}
+            showsVerticalScrollIndicator={false}
+            onContentSizeChange={() => flatRef.current?.scrollToEnd({ animated: false })}
+            ListEmptyComponent={
+              <View style={styles.emptyContainer}>
+                <LinearGradient colors={["#1D4ED830", "#3B82F620"]} style={styles.emptyIcon}>
+                  <MaterialCommunityIcons name="robot-outline" size={48} color="#3B82F6" />
+                </LinearGradient>
+                <Text style={styles.emptyTitle}>Namaste! Main RakshBot hun 🙏</Text>
+                <Text style={styles.emptySubtitle}>
+                  Your personal AI cybersecurity mentor powered by Claude AI. Ask me anything in Hindi, English, or Hinglish!
                 </Text>
-              </TouchableOpacity>
-            )}
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ paddingHorizontal: 16, gap: 8 }}
+              </View>
+            }
+            ListFooterComponent={sending ? (
+              <View style={[styles.msgRow, styles.botRow]}>
+                <LinearGradient colors={["#1D4ED8", "#3B82F6"]} style={styles.botAvatar}>
+                  <MaterialCommunityIcons name="robot" size={14} color="#FFF" />
+                </LinearGradient>
+                <View style={[styles.bubble, styles.botBubble, styles.typingBubble]}>
+                  <View style={styles.typingDots}>
+                    {[0, 1, 2].map(i => (
+                      <View key={i} style={styles.typingDot} />
+                    ))}
+                  </View>
+                </View>
+              </View>
+            ) : null}
           />
-        </View>
-      )}
+        )}
 
-      {/* Input */}
-      <View style={[styles.inputContainer, { borderTopColor: colors.border, backgroundColor: colors.background, paddingBottom: insets.bottom + 8 }]}>
-        <View style={[styles.inputRow, { backgroundColor: colors.muted, borderColor: colors.border }]}>
-          <TextInput
-            style={[styles.textInput, { color: colors.foreground, fontFamily: "Inter_400Regular" }]}
-            placeholder="Ask RakshBot anything..."
-            placeholderTextColor={colors.mutedForeground}
-            value={input}
-            onChangeText={setInput}
-            multiline
-            maxLength={1000}
-            onSubmitEditing={() => sendMessage()}
-          />
-          <TouchableOpacity
-            style={[styles.sendBtn, { backgroundColor: input.trim() ? colors.primary : colors.muted }]}
-            onPress={() => sendMessage()}
-            disabled={!input.trim() || sending}
-            activeOpacity={0.8}
-          >
-            <Feather name="send" size={18} color={input.trim() ? "#FFF" : colors.mutedForeground} />
-          </TouchableOpacity>
+        {/* Quick Prompts */}
+        {allMessages.length === 0 && !isLoading && (
+          <View style={styles.quickPromptsContainer}>
+            <FlatList
+              horizontal
+              data={QUICK_PROMPTS}
+              keyExtractor={item => item}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={styles.quickPrompt}
+                  onPress={() => sendMessage(item)}
+                  activeOpacity={0.7}
+                >
+                  <Feather name="zap" size={12} color="#06B6D4" />
+                  <Text style={styles.quickPromptText}>{item}</Text>
+                </TouchableOpacity>
+              )}
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{ paddingHorizontal: 16, gap: 8 }}
+            />
+          </View>
+        )}
+
+        {/* Input */}
+        <View style={[styles.inputContainer, { paddingBottom: insets.bottom + 8 }]}>
+          <View style={styles.inputRow}>
+            <MaterialCommunityIcons name="robot-outline" size={20} color="rgba(255,255,255,0.3)" />
+            <TextInput
+              style={styles.textInput}
+              placeholder="Ask RakshBot anything..."
+              placeholderTextColor="rgba(255,255,255,0.25)"
+              value={input}
+              onChangeText={setInput}
+              multiline
+              maxLength={1000}
+            />
+            <TouchableOpacity
+              style={[styles.sendBtn, { opacity: input.trim() && !sending ? 1 : 0.4 }]}
+              onPress={() => sendMessage()}
+              disabled={!input.trim() || sending}
+              activeOpacity={0.8}
+            >
+              <LinearGradient colors={["#1D4ED8", "#3B82F6"]} style={styles.sendBtnGrad}>
+                <Feather name="send" size={16} color="#FFF" />
+              </LinearGradient>
+            </TouchableOpacity>
+          </View>
         </View>
-      </View>
-    </KeyboardAvoidingView>
+      </KeyboardAvoidingView>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
   header: { paddingHorizontal: 20, paddingBottom: 16 },
-  headerContent: {},
-  botInfo: { flexDirection: "row", alignItems: "center", gap: 12 },
-  botIconBg: { width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center" },
-  botName: { color: "#FFF", fontSize: 18 },
-  onlineRow: { flexDirection: "row", alignItems: "center", gap: 5 },
-  onlineDot: { width: 6, height: 6, borderRadius: 3 },
-  onlineText: { color: "rgba(255,255,255,0.8)", fontSize: 12 },
+  headerContent: { flexDirection: "row", alignItems: "center", gap: 12 },
+  botIconBg: { width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center", shadowColor: "#3B82F6", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 8, elevation: 6 },
+  botName: { color: "#FFF", fontSize: 18, fontFamily: "Inter_700Bold" },
+  onlineRow: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 2 },
+  onlineDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: "#10B981" },
+  onlineText: { color: "rgba(255,255,255,0.55)", fontSize: 11, fontFamily: "Inter_400Regular" },
+  headerBadge: { flexDirection: "row", alignItems: "center", gap: 4, backgroundColor: "rgba(6,182,212,0.15)", paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20 },
+  headerBadgeText: { color: "#06B6D4", fontSize: 11, fontFamily: "Inter_700Bold" },
   loadingContainer: { flex: 1, alignItems: "center", justifyContent: "center" },
   messageList: { padding: 16, gap: 12 },
   msgRow: { flexDirection: "row", gap: 8, maxWidth: "100%" },
-  botRow: { alignItems: "flex-end" },
+  botRow: { alignItems: "flex-start" },
   userRow: { justifyContent: "flex-end" },
-  botAvatar: { width: 28, height: 28, borderRadius: 14, alignItems: "center", justifyContent: "center", flexShrink: 0 },
-  bubble: { maxWidth: "80%", padding: 12, borderRadius: 16, gap: 4 },
-  botBubble: { borderTopLeftRadius: 4, borderWidth: 1 },
-  userBubble: { borderTopRightRadius: 4 },
-  bubbleText: { fontSize: 14, lineHeight: 20 },
-  timeText: { fontSize: 10, alignSelf: "flex-end" },
-  emptyContainer: { alignItems: "center", paddingTop: 60, paddingHorizontal: 40, gap: 12 },
-  emptyTitle: { fontSize: 20, textAlign: "center" },
-  emptySubtitle: { fontSize: 14, textAlign: "center", lineHeight: 20 },
-  quickPromptsContainer: { paddingVertical: 12 },
-  quickPromptsTitle: { fontSize: 12, paddingHorizontal: 16, marginBottom: 8 },
-  quickPrompt: { paddingHorizontal: 14, paddingVertical: 10, borderRadius: 20, borderWidth: 1 },
-  quickPromptText: { fontSize: 13 },
-  inputContainer: { borderTopWidth: 1, padding: 12 },
-  inputRow: { flexDirection: "row", alignItems: "flex-end", borderRadius: 24, borderWidth: 1, paddingHorizontal: 14, paddingVertical: 8, gap: 8 },
-  textInput: { flex: 1, fontSize: 15, maxHeight: 100 },
-  sendBtn: { width: 36, height: 36, borderRadius: 18, alignItems: "center", justifyContent: "center" },
+  botAvatar: { width: 30, height: 30, borderRadius: 15, alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 2 },
+  bubble: { maxWidth: "80%", padding: 14, borderRadius: 18, gap: 5, overflow: "hidden" },
+  botBubble: { borderTopLeftRadius: 4, backgroundColor: "#0F1A2E", borderWidth: 1, borderColor: "rgba(255,255,255,0.06)" },
+  userBubble: { borderTopRightRadius: 4, backgroundColor: "#1D4ED8" },
+  typingBubble: { paddingVertical: 16 },
+  typingDots: { flexDirection: "row", gap: 4 },
+  typingDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: "rgba(255,255,255,0.4)" },
+  bubbleText: { fontSize: 14, lineHeight: 21, fontFamily: "Inter_400Regular" },
+  timeText: { fontSize: 10, alignSelf: "flex-end", fontFamily: "Inter_400Regular" },
+  emptyContainer: { alignItems: "center", paddingTop: 48, paddingHorizontal: 40, gap: 16 },
+  emptyIcon: { width: 88, height: 88, borderRadius: 44, alignItems: "center", justifyContent: "center", marginBottom: 4 },
+  emptyTitle: { color: "#F8FAFC", fontSize: 20, fontFamily: "Inter_700Bold", textAlign: "center" },
+  emptySubtitle: { color: "rgba(255,255,255,0.45)", fontSize: 14, textAlign: "center", lineHeight: 21, fontFamily: "Inter_400Regular" },
+  quickPromptsContainer: { paddingVertical: 10 },
+  quickPrompt: { flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 14, paddingVertical: 10, borderRadius: 20, backgroundColor: "#0F1A2E", borderWidth: 1, borderColor: "rgba(6,182,212,0.2)" },
+  quickPromptText: { color: "rgba(255,255,255,0.7)", fontSize: 12, fontFamily: "Inter_400Regular" },
+  inputContainer: { borderTopWidth: 1, borderTopColor: "rgba(255,255,255,0.06)", padding: 12, backgroundColor: "#060D1A" },
+  inputRow: { flexDirection: "row", alignItems: "flex-end", backgroundColor: "#0F1A2E", borderRadius: 24, borderWidth: 1, borderColor: "rgba(255,255,255,0.08)", paddingHorizontal: 16, paddingVertical: 10, gap: 10 },
+  textInput: { flex: 1, color: "#F8FAFC", fontSize: 15, fontFamily: "Inter_400Regular", maxHeight: 100 },
+  sendBtn: {},
+  sendBtnGrad: { width: 36, height: 36, borderRadius: 18, alignItems: "center", justifyContent: "center" },
 });

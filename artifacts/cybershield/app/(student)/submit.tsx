@@ -1,22 +1,32 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
-  ScrollView, Alert, KeyboardAvoidingView, Platform,
+  ScrollView, Alert, KeyboardAvoidingView, Platform, Animated,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useQueryClient } from "@tanstack/react-query";
-import { Feather } from "@expo/vector-icons";
+import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
+import { LinearGradient } from "expo-linear-gradient";
 import { useColors } from "@/hooks/useColors";
 import { useApi } from "@/hooks/useApi";
 
-const TYPES = ["vulnerability", "fraud_report", "research", "ctf_solution"];
-const SEVERITIES = ["critical", "high", "medium", "low", "info"];
-const CATEGORIES = ["web", "network", "mobile", "social_engineering", "financial", "hardware", "malware", "osint", "other"];
+const TYPES = [
+  { value: "vulnerability", label: "Vulnerability", icon: "bug" },
+  { value: "fraud_report", label: "Fraud Report", icon: "alert-triangle" },
+  { value: "research", label: "Research", icon: "cpu" },
+  { value: "ctf_solution", label: "CTF Solution", icon: "flag" },
+];
 
-const SEV_COLORS: Record<string, string> = {
-  critical: "#EF4444", high: "#F97316", medium: "#EAB308", low: "#84CC16", info: "#60A5FA",
-};
+const SEVERITIES = [
+  { value: "critical", label: "Critical", color: "#EF4444", pts: "500-5000" },
+  { value: "high", label: "High", color: "#F97316", pts: "200-500" },
+  { value: "medium", label: "Medium", color: "#EAB308", pts: "50-200" },
+  { value: "low", label: "Low", color: "#84CC16", pts: "10-50" },
+  { value: "info", label: "Info", color: "#60A5FA", pts: "5-10" },
+];
+
+const CATEGORIES = ["web", "network", "mobile", "social_engineering", "financial", "hardware", "malware", "osint", "other"];
 
 export default function SubmitScreen() {
   const colors = useColors();
@@ -24,6 +34,7 @@ export default function SubmitScreen() {
   const { apiFetch } = useApi();
   const qc = useQueryClient();
 
+  const [step, setStep] = useState(1);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [type, setType] = useState("vulnerability");
@@ -35,9 +46,19 @@ export default function SubmitScreen() {
   const [fix, setFix] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(20)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, { toValue: 1, duration: 600, useNativeDriver: true }),
+      Animated.timing(slideAnim, { toValue: 0, duration: 600, useNativeDriver: true }),
+    ]).start();
+  }, []);
+
   async function handleSubmit() {
     if (!title.trim() || !description.trim()) {
-      Alert.alert("Error", "Title and description are required");
+      Alert.alert("Missing Info", "Title and description are required");
       return;
     }
     setLoading(true);
@@ -45,8 +66,7 @@ export default function SubmitScreen() {
       await apiFetch("/submissions", {
         method: "POST",
         body: JSON.stringify({
-          title: title.trim(),
-          description: description.trim(),
+          title: title.trim(), description: description.trim(),
           type, severity, category,
           target_url: targetUrl.trim(),
           steps_to_reproduce: steps.trim(),
@@ -57,11 +77,10 @@ export default function SubmitScreen() {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       qc.invalidateQueries({ queryKey: ["dashboard-stats"] });
       qc.invalidateQueries({ queryKey: ["my-submissions"] });
-      Alert.alert(
-        "Submitted!",
-        "Your report has been submitted for review. RakshBot AI will analyze it shortly.",
-        [{ text: "OK", onPress: () => { setTitle(""); setDescription(""); setSteps(""); setImpact(""); setFix(""); setTargetUrl(""); } }]
-      );
+      Alert.alert("🎉 Submitted!", "Your report has been submitted. RakshBot AI will analyze it shortly.", [
+        { text: "Submit Another", onPress: () => { setTitle(""); setDescription(""); setSteps(""); setImpact(""); setFix(""); setTargetUrl(""); setStep(1); } },
+        { text: "View Reports", onPress: () => {} },
+      ]);
     } catch (err: any) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       Alert.alert("Error", err.message || "Failed to submit");
@@ -72,199 +91,263 @@ export default function SubmitScreen() {
 
   const isWeb = Platform.OS === "web";
   const topPad = insets.top + (isWeb ? 16 : 0);
+  const selectedSev = SEVERITIES.find(s => s.value === severity);
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1, backgroundColor: colors.background }}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-    >
-      <View style={[styles.header, { paddingTop: topPad + 12, backgroundColor: colors.background, borderBottomColor: colors.border }]}>
-        <Text style={[styles.headerTitle, { color: colors.foreground, fontFamily: "Inter_700Bold" }]}>
-          Submit Report
-        </Text>
-        <Text style={[styles.headerSub, { color: colors.mutedForeground, fontFamily: "Inter_400Regular" }]}>
-          Report vulnerabilities & earn rewards
-        </Text>
-      </View>
+    <LinearGradient colors={["#060D1A", "#0B1120"]} style={{ flex: 1 }}>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : "height"}>
+        {/* Header */}
+        <LinearGradient colors={["#0F2040", "#0B1120"]} style={[styles.header, { paddingTop: topPad + 12 }]}>
+          <View style={styles.headerRow}>
+            <View>
+              <Text style={styles.headerTitle}>Submit Report</Text>
+              <Text style={styles.headerSub}>Report vulnerabilities · Earn rewards</Text>
+            </View>
+            <View style={styles.stepIndicator}>
+              {[1, 2, 3].map(s => (
+                <View key={s} style={[styles.stepDot, s === step && styles.stepDotActive, s < step && styles.stepDotDone]} />
+              ))}
+            </View>
+          </View>
+          <View style={styles.stepsRow}>
+            {["Type & Severity", "Details", "Proof"].map((label, i) => (
+              <TouchableOpacity key={label} onPress={() => setStep(i + 1)} style={[styles.stepTab, step === i + 1 && styles.stepTabActive]}>
+                <Text style={[styles.stepTabText, step === i + 1 && styles.stepTabTextActive]}>
+                  {i + 1}. {label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </LinearGradient>
 
-      <ScrollView
-        contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 90 }]}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Type */}
-        <Label text="Report Type" colors={colors} />
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 16 }}>
-          {TYPES.map(t => (
-            <TouchableOpacity
-              key={t}
-              style={[styles.chip, { backgroundColor: type === t ? colors.primary : colors.card, borderColor: type === t ? colors.primary : colors.border }]}
-              onPress={() => { setType(t); Haptics.selectionAsync(); }}
-            >
-              <Text style={[styles.chipText, { color: type === t ? "#FFF" : colors.foreground, fontFamily: "Inter_500Medium" }]}>
-                {t.replace("_", " ")}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-
-        {/* Severity */}
-        <Label text="Severity Level" colors={colors} />
-        <View style={styles.row}>
-          {SEVERITIES.map(s => (
-            <TouchableOpacity
-              key={s}
-              style={[styles.sevChip, { backgroundColor: severity === s ? SEV_COLORS[s] : colors.card, borderColor: SEV_COLORS[s] }]}
-              onPress={() => { setSeverity(s); Haptics.selectionAsync(); }}
-            >
-              <Text style={[styles.chipText, { color: severity === s ? "#FFF" : SEV_COLORS[s], fontFamily: "Inter_600SemiBold" }]}>
-                {s.toUpperCase()}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        {/* Category */}
-        <Label text="Category" colors={colors} />
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 16 }}>
-          {CATEGORIES.map(c => (
-            <TouchableOpacity
-              key={c}
-              style={[styles.chip, { backgroundColor: category === c ? colors.accent : colors.card, borderColor: category === c ? colors.accent : colors.border }]}
-              onPress={() => { setCategory(c); Haptics.selectionAsync(); }}
-            >
-              <Text style={[styles.chipText, { color: category === c ? "#FFF" : colors.foreground, fontFamily: "Inter_500Medium" }]}>
-                {c.replace("_", " ")}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-
-        {/* Title */}
-        <Label text="Title *" colors={colors} />
-        <TextInput
-          style={[styles.input, { backgroundColor: colors.muted, borderColor: colors.border, color: colors.foreground, fontFamily: "Inter_400Regular" }]}
-          placeholder="Brief description of the vulnerability"
-          placeholderTextColor={colors.mutedForeground}
-          value={title}
-          onChangeText={setTitle}
-          maxLength={200}
-        />
-
-        {/* Description */}
-        <Label text="Description *" colors={colors} />
-        <TextInput
-          style={[styles.textarea, { backgroundColor: colors.muted, borderColor: colors.border, color: colors.foreground, fontFamily: "Inter_400Regular" }]}
-          placeholder="Detailed description of what you found..."
-          placeholderTextColor={colors.mutedForeground}
-          value={description}
-          onChangeText={setDescription}
-          multiline
-          numberOfLines={5}
-          textAlignVertical="top"
-        />
-
-        {/* Target URL */}
-        <Label text="Target URL / System" colors={colors} />
-        <TextInput
-          style={[styles.input, { backgroundColor: colors.muted, borderColor: colors.border, color: colors.foreground, fontFamily: "Inter_400Regular" }]}
-          placeholder="https://example.gov.in/login"
-          placeholderTextColor={colors.mutedForeground}
-          value={targetUrl}
-          onChangeText={setTargetUrl}
-          autoCapitalize="none"
-          keyboardType="url"
-        />
-
-        {/* Steps to reproduce */}
-        <Label text="Steps to Reproduce" colors={colors} />
-        <TextInput
-          style={[styles.textarea, { backgroundColor: colors.muted, borderColor: colors.border, color: colors.foreground, fontFamily: "Inter_400Regular" }]}
-          placeholder="1. Go to login page&#10;2. Enter ' OR 1=1-- in username&#10;3. ..."
-          placeholderTextColor={colors.mutedForeground}
-          value={steps}
-          onChangeText={setSteps}
-          multiline
-          numberOfLines={4}
-          textAlignVertical="top"
-        />
-
-        {/* Impact */}
-        <Label text="Impact Description" colors={colors} />
-        <TextInput
-          style={[styles.textarea, { backgroundColor: colors.muted, borderColor: colors.border, color: colors.foreground, fontFamily: "Inter_400Regular" }]}
-          placeholder="Describe the potential impact of this vulnerability..."
-          placeholderTextColor={colors.mutedForeground}
-          value={impact}
-          onChangeText={setImpact}
-          multiline
-          numberOfLines={3}
-          textAlignVertical="top"
-        />
-
-        {/* Fix suggestion */}
-        <Label text="Suggested Fix" colors={colors} />
-        <TextInput
-          style={[styles.textarea, { backgroundColor: colors.muted, borderColor: colors.border, color: colors.foreground, fontFamily: "Inter_400Regular" }]}
-          placeholder="How should this be fixed? (parameterized queries, input validation...)"
-          placeholderTextColor={colors.mutedForeground}
-          value={fix}
-          onChangeText={setFix}
-          multiline
-          numberOfLines={3}
-          textAlignVertical="top"
-        />
-
-        {/* AI note */}
-        <View style={[styles.aiNote, { backgroundColor: colors.primary + "15", borderColor: colors.primary + "40" }]}>
-          <Feather name="cpu" size={16} color={colors.primary} />
-          <Text style={[styles.aiNoteText, { color: colors.primary, fontFamily: "Inter_400Regular" }]}>
-            RakshBot AI will automatically analyze your submission for quality and plagiarism before it reaches reviewers.
-          </Text>
-        </View>
-
-        <TouchableOpacity
-          style={[styles.submitBtn, { backgroundColor: loading ? colors.muted : colors.primary }]}
-          onPress={handleSubmit}
-          disabled={loading}
-          activeOpacity={0.8}
+        <ScrollView
+          contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 100 }]}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
         >
-          <Feather name="send" size={18} color={loading ? colors.mutedForeground : "#FFF"} />
-          <Text style={[styles.submitBtnText, { color: loading ? colors.mutedForeground : "#FFF", fontFamily: "Inter_600SemiBold" }]}>
-            {loading ? "Submitting..." : "Submit Report"}
-          </Text>
-        </TouchableOpacity>
-      </ScrollView>
-    </KeyboardAvoidingView>
+          <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
+            {step === 1 && (
+              <>
+                {/* Type Selection */}
+                <Label text="Report Type" />
+                <View style={styles.typeGrid}>
+                  {TYPES.map(t => (
+                    <TouchableOpacity
+                      key={t.value}
+                      style={[styles.typeCard, type === t.value && styles.typeCardActive]}
+                      onPress={() => { setType(t.value); Haptics.selectionAsync(); }}
+                      activeOpacity={0.75}
+                    >
+                      {type === t.value && <LinearGradient colors={["#1D4ED820", "#3B82F610"]} style={StyleSheet.absoluteFill} />}
+                      <Feather name={t.icon as any} size={20} color={type === t.value ? "#3B82F6" : "rgba(255,255,255,0.4)"} />
+                      <Text style={[styles.typeLabel, type === t.value && { color: "#3B82F6" }]}>{t.label}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+
+                {/* Severity */}
+                <Label text="Severity Level" />
+                <View style={styles.sevGrid}>
+                  {SEVERITIES.map(s => (
+                    <TouchableOpacity
+                      key={s.value}
+                      style={[styles.sevCard, { borderColor: s.color + "50" }, severity === s.value && { backgroundColor: s.color + "20", borderColor: s.color }]}
+                      onPress={() => { setSeverity(s.value); Haptics.selectionAsync(); }}
+                      activeOpacity={0.75}
+                    >
+                      <Text style={[styles.sevLabel, { color: severity === s.value ? s.color : "rgba(255,255,255,0.5)" }]}>{s.label}</Text>
+                      <Text style={[styles.sevPts, { color: severity === s.value ? s.color : "rgba(255,255,255,0.3)" }]}>{s.pts} pts</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+
+                {/* Category */}
+                <Label text="Category" />
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 20 }}>
+                  {CATEGORIES.map(c => (
+                    <TouchableOpacity
+                      key={c}
+                      style={[styles.catChip, category === c && styles.catChipActive]}
+                      onPress={() => { setCategory(c); Haptics.selectionAsync(); }}
+                    >
+                      <Text style={[styles.catText, category === c && { color: "#06B6D4" }]}>{c.replace("_", " ")}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+
+                <TouchableOpacity onPress={() => setStep(2)} activeOpacity={0.85}>
+                  <LinearGradient colors={["#1D4ED8", "#3B82F6"]} style={styles.nextBtn}>
+                    <Text style={styles.nextBtnText}>Continue</Text>
+                    <Feather name="arrow-right" size={18} color="#FFF" />
+                  </LinearGradient>
+                </TouchableOpacity>
+              </>
+            )}
+
+            {step === 2 && (
+              <>
+                <Label text="Title *" />
+                <TextInput
+                  style={styles.inputField}
+                  placeholder="Brief description of the vulnerability"
+                  placeholderTextColor="rgba(255,255,255,0.3)"
+                  value={title}
+                  onChangeText={setTitle}
+                  maxLength={200}
+                />
+
+                <Label text="Description *" />
+                <TextInput
+                  style={[styles.inputField, styles.textarea]}
+                  placeholder="Detailed description of what you found..."
+                  placeholderTextColor="rgba(255,255,255,0.3)"
+                  value={description}
+                  onChangeText={setDescription}
+                  multiline
+                  numberOfLines={5}
+                  textAlignVertical="top"
+                />
+
+                <Label text="Target URL / System" />
+                <TextInput
+                  style={styles.inputField}
+                  placeholder="https://example.gov.in/login"
+                  placeholderTextColor="rgba(255,255,255,0.3)"
+                  value={targetUrl}
+                  onChangeText={setTargetUrl}
+                  autoCapitalize="none"
+                  keyboardType="url"
+                />
+
+                <View style={styles.stepBtns}>
+                  <TouchableOpacity onPress={() => setStep(1)} style={styles.backBtn}>
+                    <Feather name="arrow-left" size={16} color="rgba(255,255,255,0.6)" />
+                    <Text style={styles.backBtnText}>Back</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => { if (!title || !description) { Alert.alert("Missing", "Title and description required"); return; } setStep(3); }} activeOpacity={0.85} style={{ flex: 1 }}>
+                    <LinearGradient colors={["#1D4ED8", "#3B82F6"]} style={styles.nextBtn}>
+                      <Text style={styles.nextBtnText}>Continue</Text>
+                      <Feather name="arrow-right" size={18} color="#FFF" />
+                    </LinearGradient>
+                  </TouchableOpacity>
+                </View>
+              </>
+            )}
+
+            {step === 3 && (
+              <>
+                <Label text="Steps to Reproduce" />
+                <TextInput
+                  style={[styles.inputField, styles.textarea]}
+                  placeholder={"1. Go to login page\n2. Enter payload\n3. Observe result..."}
+                  placeholderTextColor="rgba(255,255,255,0.3)"
+                  value={steps}
+                  onChangeText={setSteps}
+                  multiline
+                  numberOfLines={4}
+                  textAlignVertical="top"
+                />
+
+                <Label text="Impact Description" />
+                <TextInput
+                  style={[styles.inputField, styles.textarea]}
+                  placeholder="Describe the potential impact..."
+                  placeholderTextColor="rgba(255,255,255,0.3)"
+                  value={impact}
+                  onChangeText={setImpact}
+                  multiline
+                  numberOfLines={3}
+                  textAlignVertical="top"
+                />
+
+                <Label text="Suggested Fix" />
+                <TextInput
+                  style={[styles.inputField, styles.textarea]}
+                  placeholder="How should this be fixed?"
+                  placeholderTextColor="rgba(255,255,255,0.3)"
+                  value={fix}
+                  onChangeText={setFix}
+                  multiline
+                  numberOfLines={3}
+                  textAlignVertical="top"
+                />
+
+                {/* Summary card */}
+                <LinearGradient colors={["#0F2040", "#1A3A6B"]} style={styles.summaryCard}>
+                  <View style={styles.summaryRow}>
+                    <MaterialCommunityIcons name="bug" size={16} color="#06B6D4" />
+                    <Text style={styles.summaryText}>Type: <Text style={{ color: "#F8FAFC" }}>{type.replace("_", " ")}</Text></Text>
+                  </View>
+                  <View style={styles.summaryRow}>
+                    <MaterialCommunityIcons name="alert-circle" size={16} color={selectedSev?.color} />
+                    <Text style={styles.summaryText}>Severity: <Text style={{ color: selectedSev?.color }}>{severity} ({selectedSev?.pts} pts)</Text></Text>
+                  </View>
+                  <View style={styles.summaryRow}>
+                    <MaterialCommunityIcons name="robot" size={16} color="#3B82F6" />
+                    <Text style={styles.summaryText}>RakshBot AI will analyze this submission automatically</Text>
+                  </View>
+                </LinearGradient>
+
+                <View style={styles.stepBtns}>
+                  <TouchableOpacity onPress={() => setStep(2)} style={styles.backBtn}>
+                    <Feather name="arrow-left" size={16} color="rgba(255,255,255,0.6)" />
+                    <Text style={styles.backBtnText}>Back</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={handleSubmit} disabled={loading} activeOpacity={0.85} style={{ flex: 1 }}>
+                    <LinearGradient colors={loading ? ["#334155", "#334155"] : ["#059669", "#10B981"]} style={styles.nextBtn}>
+                      <Feather name="send" size={18} color="#FFF" />
+                      <Text style={styles.nextBtnText}>{loading ? "Submitting..." : "Submit Report"}</Text>
+                    </LinearGradient>
+                  </TouchableOpacity>
+                </View>
+              </>
+            )}
+          </Animated.View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </LinearGradient>
   );
 }
 
-function Label({ text, colors }: any) {
-  return (
-    <Text style={[styles.label, { color: colors.foreground, fontFamily: "Inter_600SemiBold" }]}>{text}</Text>
-  );
+function Label({ text }: { text: string }) {
+  return <Text style={styles.label}>{text}</Text>;
 }
 
 const styles = StyleSheet.create({
-  header: { paddingHorizontal: 20, paddingBottom: 16, borderBottomWidth: 1 },
-  headerTitle: { fontSize: 22 },
-  headerSub: { fontSize: 13, marginTop: 2 },
+  header: { paddingHorizontal: 20, paddingBottom: 16 },
+  headerRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 },
+  headerTitle: { color: "#F8FAFC", fontSize: 22, fontFamily: "Inter_700Bold" },
+  headerSub: { color: "rgba(255,255,255,0.45)", fontSize: 12, fontFamily: "Inter_400Regular", marginTop: 2 },
+  stepIndicator: { flexDirection: "row", gap: 6, alignItems: "center", paddingTop: 4 },
+  stepDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: "rgba(255,255,255,0.15)" },
+  stepDotActive: { backgroundColor: "#3B82F6", width: 20 },
+  stepDotDone: { backgroundColor: "#10B981" },
+  stepsRow: { flexDirection: "row", gap: 8 },
+  stepTab: { flex: 1, paddingVertical: 8, alignItems: "center", borderRadius: 10, backgroundColor: "rgba(255,255,255,0.04)" },
+  stepTabActive: { backgroundColor: "rgba(59,130,246,0.2)" },
+  stepTabText: { color: "rgba(255,255,255,0.4)", fontSize: 11, fontFamily: "Inter_500Medium" },
+  stepTabTextActive: { color: "#3B82F6" },
   content: { padding: 16 },
-  label: { fontSize: 14, marginBottom: 8, marginTop: 4 },
-  chip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, borderWidth: 1, marginRight: 8 },
-  sevChip: { flex: 1, paddingVertical: 8, borderRadius: 8, borderWidth: 1.5, alignItems: "center", marginRight: 6 },
-  chipText: { fontSize: 13 },
-  row: { flexDirection: "row", marginBottom: 16 },
-  input: {
-    borderRadius: 12, borderWidth: 1, paddingHorizontal: 14, paddingVertical: 12,
-    fontSize: 15, marginBottom: 16,
-  },
-  textarea: {
-    borderRadius: 12, borderWidth: 1, paddingHorizontal: 14, paddingVertical: 12,
-    fontSize: 15, marginBottom: 16, minHeight: 100,
-  },
-  aiNote: { flexDirection: "row", alignItems: "flex-start", gap: 10, padding: 14, borderRadius: 12, borderWidth: 1, marginBottom: 20 },
-  aiNoteText: { flex: 1, fontSize: 13, lineHeight: 18 },
-  submitBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10, height: 54, borderRadius: 14 },
-  submitBtnText: { fontSize: 16 },
+  label: { color: "#F8FAFC", fontSize: 14, fontFamily: "Inter_600SemiBold", marginBottom: 10, marginTop: 8 },
+  typeGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10, marginBottom: 4 },
+  typeCard: { width: "47%", padding: 14, borderRadius: 14, borderWidth: 1, borderColor: "rgba(255,255,255,0.08)", backgroundColor: "#0F1A2E", alignItems: "center", gap: 8, overflow: "hidden" },
+  typeCardActive: { borderColor: "#3B82F6" },
+  typeLabel: { color: "rgba(255,255,255,0.5)", fontSize: 13, fontFamily: "Inter_500Medium" },
+  sevGrid: { flexDirection: "row", gap: 8, marginBottom: 4 },
+  sevCard: { flex: 1, padding: 10, borderRadius: 10, borderWidth: 1, alignItems: "center", gap: 3, backgroundColor: "rgba(255,255,255,0.03)" },
+  sevLabel: { fontSize: 11, fontFamily: "Inter_600SemiBold" },
+  sevPts: { fontSize: 9, fontFamily: "Inter_400Regular" },
+  catChip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, borderWidth: 1, borderColor: "rgba(255,255,255,0.08)", marginRight: 8, backgroundColor: "#0F1A2E" },
+  catChipActive: { backgroundColor: "#06B6D420", borderColor: "#06B6D4" },
+  catText: { color: "rgba(255,255,255,0.5)", fontSize: 13, fontFamily: "Inter_500Medium" },
+  inputField: { backgroundColor: "#1E293B", borderRadius: 13, borderWidth: 1, borderColor: "rgba(255,255,255,0.08)", paddingHorizontal: 16, paddingVertical: 14, color: "#F8FAFC", fontSize: 15, fontFamily: "Inter_400Regular", marginBottom: 16 },
+  textarea: { minHeight: 100, textAlignVertical: "top" },
+  nextBtn: { height: 54, borderRadius: 14, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10 },
+  nextBtnText: { color: "#FFF", fontSize: 16, fontFamily: "Inter_600SemiBold" },
+  stepBtns: { flexDirection: "row", gap: 12, alignItems: "stretch" },
+  backBtn: { flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 16, borderRadius: 14, borderWidth: 1, borderColor: "rgba(255,255,255,0.08)", backgroundColor: "#0F1A2E" },
+  backBtnText: { color: "rgba(255,255,255,0.6)", fontSize: 14, fontFamily: "Inter_500Medium" },
+  summaryCard: { borderRadius: 16, padding: 16, marginBottom: 20, borderWidth: 1, borderColor: "rgba(59,130,246,0.2)", gap: 10 },
+  summaryRow: { flexDirection: "row", alignItems: "center", gap: 10 },
+  summaryText: { color: "rgba(255,255,255,0.5)", fontSize: 13, fontFamily: "Inter_400Regular", flex: 1 },
 });

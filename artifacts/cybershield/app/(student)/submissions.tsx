@@ -1,9 +1,10 @@
-import React, { useState } from "react";
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Platform } from "react-native";
+import React, { useState, useRef, useEffect } from "react";
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Platform, Animated } from "react-native";
 import { useQuery } from "@tanstack/react-query";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Feather } from "@expo/vector-icons";
+import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
+import { LinearGradient } from "expo-linear-gradient";
 import { useColors } from "@/hooks/useColors";
 import { useApi } from "@/hooks/useApi";
 
@@ -21,30 +22,80 @@ export default function SubmissionsScreen() {
   const { apiFetch } = useApi();
   const isWeb = Platform.OS === "web";
   const topPad = insets.top + (isWeb ? 16 : 0);
+  const [statusFilter, setStatusFilter] = useState("all");
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.timing(fadeAnim, { toValue: 1, duration: 600, useNativeDriver: true }).start();
+  }, []);
 
   const { data, isLoading, refetch, isRefetching } = useQuery({
     queryKey: ["my-submissions"],
-    queryFn: () => apiFetch("/submissions?limit=50"),
+    queryFn: () => apiFetch("/submissions?limit=100"),
   });
 
-  const submissions = data?.submissions || [];
+  const all = data?.submissions || [];
+  const filtered = statusFilter === "all" ? all : all.filter((s: any) => s.status === statusFilter);
+  const counts = all.reduce((acc: any, s: any) => { acc[s.status] = (acc[s.status] || 0) + 1; return acc; }, {});
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={[styles.header, { paddingTop: topPad + 12, borderBottomColor: colors.border }]}>
-        <TouchableOpacity onPress={() => router.back()} style={{ marginBottom: 8 }}>
-          <Feather name="arrow-left" size={22} color={colors.foreground} />
+    <LinearGradient colors={["#060D1A", "#0B1120"]} style={{ flex: 1 }}>
+      <LinearGradient colors={["#0F2040", "#1A3A6B", "#0B1120"]} style={[styles.header, { paddingTop: topPad + 12 }]}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+          <Feather name="arrow-left" size={20} color="rgba(255,255,255,0.8)" />
         </TouchableOpacity>
-        <Text style={[styles.title, { color: colors.foreground, fontFamily: "Inter_700Bold" }]}>My Reports</Text>
-        <Text style={[styles.subtitle, { color: colors.mutedForeground, fontFamily: "Inter_400Regular" }]}>
-          {data?.total || 0} total submissions
-        </Text>
-      </View>
-      {isLoading ? (
-        <ActivityIndicator color={colors.primary} style={{ marginTop: 40 }} />
-      ) : (
+        <View style={styles.headerRow}>
+          <View>
+            <Text style={styles.headerTitle}>My Reports</Text>
+            <Text style={styles.headerSub}>{data?.total || 0} total submissions</Text>
+          </View>
+          <TouchableOpacity
+            style={styles.newBtn}
+            onPress={() => router.push("/(student)/submit")}
+            activeOpacity={0.8}
+          >
+            <LinearGradient colors={["#1D4ED8", "#3B82F6"]} style={styles.newBtnGrad}>
+              <Feather name="plus" size={16} color="#FFF" />
+              <Text style={styles.newBtnText}>New</Text>
+            </LinearGradient>
+          </TouchableOpacity>
+        </View>
+        {/* Status filter pills */}
         <FlatList
-          data={submissions}
+          horizontal
+          data={["all", "pending", "under_review", "verified", "rejected", "escalated"]}
+          keyExtractor={item => item}
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{ gap: 8 }}
+          renderItem={({ item: s }) => {
+            const sc = STATUS_COLORS[s] || "#3B82F6";
+            const active = statusFilter === s;
+            return (
+              <TouchableOpacity
+                style={[styles.filterChip, active && { backgroundColor: sc + "25", borderColor: sc }]}
+                onPress={() => setStatusFilter(s)}
+                activeOpacity={0.75}
+              >
+                {counts[s] !== undefined && s !== "all" && (
+                  <View style={[styles.countDot, { backgroundColor: sc }]} />
+                )}
+                <Text style={[styles.filterText, active && { color: sc }]}>
+                  {s.replace("_", " ")}{s !== "all" && counts[s] ? ` (${counts[s]})` : s === "all" ? ` (${all.length})` : ""}
+                </Text>
+              </TouchableOpacity>
+            );
+          }}
+        />
+      </LinearGradient>
+
+      {isLoading ? (
+        <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+          <ActivityIndicator color="#3B82F6" size="large" />
+        </View>
+      ) : (
+        <Animated.FlatList
+          style={{ opacity: fadeAnim }}
+          data={filtered}
           keyExtractor={item => item.id}
           contentContainerStyle={{ padding: 16, gap: 12, paddingBottom: insets.bottom + 20 }}
           showsVerticalScrollIndicator={false}
@@ -54,77 +105,108 @@ export default function SubmissionsScreen() {
             const sc = STATUS_COLORS[item.status] || "#666";
             const sevc = SEV_COLORS[item.severity] || "#666";
             return (
-              <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border, borderLeftColor: sc }]}>
-                <View style={styles.cardHeader}>
+              <View style={[styles.card, { borderLeftColor: sc }]}>
+                <LinearGradient colors={[sc + "06", "transparent"]} style={StyleSheet.absoluteFill} />
+                <View style={styles.cardBadges}>
                   <View style={[styles.badge, { backgroundColor: sc + "20" }]}>
-                    <Text style={[styles.badgeText, { color: sc, fontFamily: "Inter_600SemiBold" }]}>
-                      {item.status?.replace("_", " ").toUpperCase()}
+                    <Text style={[styles.badgeText, { color: sc }]}>
+                      {item.status?.replace(/_/g, " ").toUpperCase()}
                     </Text>
                   </View>
                   {item.severity && (
-                    <View style={[styles.badge, { backgroundColor: sevc + "20" }]}>
-                      <Text style={[styles.badgeText, { color: sevc, fontFamily: "Inter_600SemiBold" }]}>{item.severity}</Text>
+                    <View style={[styles.badge, { backgroundColor: sevc + "15" }]}>
+                      <Text style={[styles.badgeText, { color: sevc }]}>{item.severity}</Text>
+                    </View>
+                  )}
+                  {item.type && (
+                    <View style={styles.typeBadge}>
+                      <Text style={styles.typeBadgeText}>{item.type.replace("_", " ")}</Text>
                     </View>
                   )}
                   {item.points_awarded > 0 && (
-                    <View style={[styles.badge, { backgroundColor: "#10B981" + "20" }]}>
-                      <Text style={[styles.badgeText, { color: "#10B981", fontFamily: "Inter_600SemiBold" }]}>+{item.points_awarded} pts</Text>
+                    <View style={styles.ptsBadge}>
+                      <MaterialCommunityIcons name="star" size={10} color="#10B981" />
+                      <Text style={styles.ptsText}>+{item.points_awarded} pts</Text>
                     </View>
                   )}
                 </View>
-                <Text style={[styles.cardTitle, { color: colors.foreground, fontFamily: "Inter_600SemiBold" }]}>{item.title}</Text>
-                <Text style={[styles.cardDesc, { color: colors.mutedForeground, fontFamily: "Inter_400Regular" }]} numberOfLines={2}>
-                  {item.description}
-                </Text>
+                <Text style={styles.cardTitle} numberOfLines={2}>{item.title}</Text>
+                {item.description && (
+                  <Text style={styles.cardDesc} numberOfLines={2}>{item.description}</Text>
+                )}
                 {item.reviewer_notes && (
-                  <View style={[styles.reviewNote, { backgroundColor: colors.muted }]}>
-                    <Feather name="message-circle" size={12} color={colors.mutedForeground} />
-                    <Text style={[styles.reviewNoteText, { color: colors.mutedForeground, fontFamily: "Inter_400Regular" }]}>
-                      {item.reviewer_notes}
-                    </Text>
+                  <View style={styles.reviewNote}>
+                    <Feather name="message-square" size={12} color="rgba(255,255,255,0.4)" />
+                    <Text style={styles.reviewNoteText} numberOfLines={2}>{item.reviewer_notes}</Text>
                   </View>
                 )}
-                <Text style={[styles.date, { color: colors.mutedForeground, fontFamily: "Inter_400Regular" }]}>
-                  {new Date(item.created_at).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}
-                  {item.category && ` · ${item.category}`}
-                </Text>
+                {item.ai_analysis && (
+                  <View style={styles.aiBox}>
+                    <MaterialCommunityIcons name="robot" size={12} color="#3B82F6" />
+                    <Text style={styles.aiText} numberOfLines={2}>{item.ai_analysis}</Text>
+                  </View>
+                )}
+                <View style={styles.cardFooter}>
+                  <Text style={styles.cardDate}>
+                    {new Date(item.created_at).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}
+                    {item.category ? ` · ${item.category}` : ""}
+                  </Text>
+                </View>
               </View>
             );
           }}
           ListEmptyComponent={
             <View style={styles.empty}>
-              <Feather name="file-text" size={48} color={colors.mutedForeground} />
-              <Text style={[styles.emptyText, { color: colors.mutedForeground, fontFamily: "Inter_400Regular" }]}>No submissions yet</Text>
-              <TouchableOpacity
-                style={[styles.submitBtn, { backgroundColor: colors.primary }]}
-                onPress={() => router.push("/(student)/submit")}
-              >
-                <Text style={[styles.submitBtnText, { fontFamily: "Inter_600SemiBold" }]}>Submit Your First Report</Text>
+              <LinearGradient colors={["rgba(59,130,246,0.15)", "rgba(6,182,212,0.08)"]} style={styles.emptyIcon}>
+                <Feather name="file-text" size={40} color="#3B82F6" />
+              </LinearGradient>
+              <Text style={styles.emptyTitle}>No reports yet</Text>
+              <Text style={styles.emptyText}>Submit your first bug or vulnerability report to start earning points!</Text>
+              <TouchableOpacity activeOpacity={0.85} onPress={() => router.push("/(student)/submit")}>
+                <LinearGradient colors={["#1D4ED8", "#3B82F6"]} style={styles.emptyBtn}>
+                  <Text style={styles.emptyBtnText}>Submit First Report</Text>
+                </LinearGradient>
               </TouchableOpacity>
             </View>
           }
         />
       )}
-    </View>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  header: { paddingHorizontal: 20, paddingBottom: 16, borderBottomWidth: 1 },
-  title: { fontSize: 22 },
-  subtitle: { fontSize: 13, marginTop: 2 },
-  card: { borderRadius: 16, padding: 14, borderWidth: 1, borderLeftWidth: 4, gap: 8 },
-  cardHeader: { flexDirection: "row", flexWrap: "wrap", gap: 6 },
+  header: { paddingHorizontal: 20, paddingBottom: 14 },
+  backBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: "rgba(255,255,255,0.08)", alignItems: "center", justifyContent: "center", marginBottom: 14 },
+  headerRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 },
+  headerTitle: { color: "#F8FAFC", fontSize: 22, fontFamily: "Inter_700Bold" },
+  headerSub: { color: "rgba(255,255,255,0.45)", fontSize: 12, fontFamily: "Inter_400Regular", marginTop: 2 },
+  newBtn: { borderRadius: 12, overflow: "hidden" },
+  newBtnGrad: { flexDirection: "row", alignItems: "center", gap: 5, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 12 },
+  newBtnText: { color: "#FFF", fontSize: 13, fontFamily: "Inter_600SemiBold" },
+  filterChip: { flexDirection: "row", alignItems: "center", gap: 5, paddingHorizontal: 12, paddingVertical: 7, borderRadius: 20, backgroundColor: "rgba(255,255,255,0.04)", borderWidth: 1, borderColor: "rgba(255,255,255,0.08)" },
+  countDot: { width: 6, height: 6, borderRadius: 3 },
+  filterText: { color: "rgba(255,255,255,0.45)", fontSize: 11, fontFamily: "Inter_500Medium" },
+  card: { backgroundColor: "#0F1A2E", borderRadius: 18, padding: 14, borderWidth: 1, borderColor: "rgba(255,255,255,0.06)", borderLeftWidth: 4, gap: 8, overflow: "hidden" },
+  cardBadges: { flexDirection: "row", flexWrap: "wrap", gap: 6 },
   badge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 },
-  badgeText: { fontSize: 10 },
-  cardTitle: { fontSize: 15 },
-  cardDesc: { fontSize: 13, lineHeight: 18 },
-  reviewNote: { flexDirection: "row", alignItems: "flex-start", gap: 6, padding: 8, borderRadius: 8 },
-  reviewNoteText: { flex: 1, fontSize: 12 },
-  date: { fontSize: 11 },
-  empty: { alignItems: "center", paddingTop: 60, gap: 16 },
-  emptyText: { fontSize: 15 },
-  submitBtn: { paddingHorizontal: 24, paddingVertical: 12, borderRadius: 12 },
-  submitBtnText: { color: "#FFF", fontSize: 15 },
+  badgeText: { fontSize: 10, fontFamily: "Inter_600SemiBold" },
+  typeBadge: { backgroundColor: "rgba(255,255,255,0.05)", paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 },
+  typeBadgeText: { color: "rgba(255,255,255,0.4)", fontSize: 10, fontFamily: "Inter_400Regular" },
+  ptsBadge: { flexDirection: "row", alignItems: "center", gap: 3, backgroundColor: "rgba(16,185,129,0.15)", paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 },
+  ptsText: { color: "#10B981", fontSize: 10, fontFamily: "Inter_700Bold" },
+  cardTitle: { color: "#F8FAFC", fontSize: 15, fontFamily: "Inter_600SemiBold" },
+  cardDesc: { color: "rgba(255,255,255,0.45)", fontSize: 13, lineHeight: 18, fontFamily: "Inter_400Regular" },
+  reviewNote: { flexDirection: "row", alignItems: "flex-start", gap: 6, backgroundColor: "rgba(255,255,255,0.04)", padding: 10, borderRadius: 8 },
+  reviewNoteText: { flex: 1, color: "rgba(255,255,255,0.45)", fontSize: 12, fontFamily: "Inter_400Regular" },
+  aiBox: { flexDirection: "row", alignItems: "flex-start", gap: 6, backgroundColor: "rgba(59,130,246,0.06)", padding: 10, borderRadius: 8, borderWidth: 1, borderColor: "rgba(59,130,246,0.15)" },
+  aiText: { flex: 1, color: "rgba(255,255,255,0.45)", fontSize: 11, fontFamily: "Inter_400Regular" },
+  cardFooter: { flexDirection: "row", justifyContent: "space-between" },
+  cardDate: { color: "rgba(255,255,255,0.3)", fontSize: 11, fontFamily: "Inter_400Regular" },
+  empty: { alignItems: "center", paddingTop: 60, gap: 14 },
+  emptyIcon: { width: 80, height: 80, borderRadius: 40, alignItems: "center", justifyContent: "center" },
+  emptyTitle: { color: "#F8FAFC", fontSize: 18, fontFamily: "Inter_600SemiBold" },
+  emptyText: { color: "rgba(255,255,255,0.35)", fontSize: 13, textAlign: "center", fontFamily: "Inter_400Regular", paddingHorizontal: 20 },
+  emptyBtn: { paddingHorizontal: 28, paddingVertical: 14, borderRadius: 14 },
+  emptyBtnText: { color: "#FFF", fontSize: 15, fontFamily: "Inter_600SemiBold" },
 });
