@@ -30,7 +30,7 @@ pnpm workspace monorepo using TypeScript. Full-stack national cybersecurity plat
 
 ### User Roles & Routing
 - **Student** → `/(student)/` tabs: Home, Submit, CTF, RakshBot, More
-- **Police** → `/(police)/` tabs: Dashboard, Review, Cases, Intel (+ hidden: analytics)
+- **Police** → `/(police)/` tabs: Dashboard, Review, Cases, Live Map, Intel (+ hidden: analytics, fir)
 - **Company** → `/(company)/` tabs: Dashboard, Bounty, Internships, Researchers (+ hidden: reports)
 - **Citizen** → `/(citizen)/` tabs: Safety (Dashboard), Alerts, Report, News
 - **Admin** → treated as student role

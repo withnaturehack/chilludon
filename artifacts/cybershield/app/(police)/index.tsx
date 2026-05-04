@@ -71,9 +71,9 @@ export default function PoliceDashboard() {
   const QUICK_ACTIONS = [
     { icon: "file-document-check", label: "Review Queue", grad: ["#D97706", "#F59E0B"], badge: data?.pending_review, onPress: () => router.push("/(police)/review") },
     { icon: "briefcase-search", label: "Active Cases", grad: ["#1D4ED8", "#3B82F6"], onPress: () => router.push("/(police)/cases") },
+    { icon: "file-document-edit", label: "File FIR", grad: ["#DC2626", "#EF4444"], onPress: () => router.push("/(police)/fir") },
     { icon: "map-marker-radius", label: "Live Map", grad: ["#059669", "#10B981"], onPress: () => router.push("/(police)/location") },
     { icon: "radar", label: "Intelligence", grad: ["#7C3AED", "#8B5CF6"], onPress: () => router.push("/(police)/intelligence") },
-    { icon: "alert-decagram", label: "Threat Alerts", grad: ["#DC2626", "#EF4444"], onPress: () => router.push("/(police)/alerts") },
     { icon: "chart-bar", label: "Analytics", grad: ["#0891B2", "#06B6D4"], onPress: () => router.push("/(police)/analytics") },
   ];
 

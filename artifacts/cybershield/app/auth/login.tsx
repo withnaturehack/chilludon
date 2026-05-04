@@ -7,29 +7,25 @@ import { router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "@/context/AuthContext";
 import { useColors } from "@/hooks/useColors";
-import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { LinearGradient } from "expo-linear-gradient";
 
+const HW = Platform.OS !== "web";
+
 const DEMO_CREDENTIALS = [
-  { label: "Student", email: "arjun@student.in", password: "Student@123", role: "student", color: "#3B82F6" },
-  { label: "Police", email: "police@cybershield.in", password: "Police@123", role: "police", color: "#10B981" },
-  { label: "Company", email: "company@cybershield.in", password: "Company@123", role: "company", color: "#F59E0B" },
-  { label: "Citizen", email: "citizen@cybershield.in", password: "Citizen@123", role: "citizen", color: "#06B6D4" },
+  { label: "Student", email: "arjun@student.in", password: "Student@123", role: "student", color: "#3B82F6", icon: "school" as const },
+  { label: "Police", email: "police@cybershield.in", password: "Police@123", role: "police", color: "#10B981", icon: "shield-star" as const },
+  { label: "Company", email: "company@cybershield.in", password: "Company@123", role: "company", color: "#F59E0B", icon: "office-building" as const },
+  { label: "Citizen", email: "citizen@cybershield.in", password: "Citizen@123", role: "citizen", color: "#06B6D4", icon: "account-circle" as const },
 ];
 
 function navigateByRole(role: string) {
-  if (role === "student" || role === "admin") {
-    router.replace("/(student)");
-  } else if (role === "police") {
-    router.replace("/(police)");
-  } else if (role === "company") {
-    router.replace("/(company)");
-  } else if (role === "citizen") {
-    router.replace("/(citizen)");
-  } else {
-    router.replace("/(student)");
-  }
+  if (role === "student" || role === "admin") router.replace("/(student)");
+  else if (role === "police") router.replace("/(police)");
+  else if (role === "company") router.replace("/(company)");
+  else if (role === "citizen") router.replace("/(citizen)");
+  else router.replace("/(student)");
 }
 
 export default function LoginScreen() {
@@ -48,8 +44,8 @@ export default function LoginScreen() {
 
   useEffect(() => {
     Animated.parallel([
-      Animated.timing(fadeAnim, { toValue: 1, duration: 700, useNativeDriver: true }),
-      Animated.timing(slideAnim, { toValue: 0, duration: 700, useNativeDriver: true }),
+      Animated.timing(fadeAnim, { toValue: 1, duration: 700, useNativeDriver: HW }),
+      Animated.timing(slideAnim, { toValue: 0, duration: 700, useNativeDriver: HW }),
     ]).start();
   }, []);
 
@@ -61,10 +57,10 @@ export default function LoginScreen() {
     setLoading(true);
     try {
       const loggedUser = await login(email.trim().toLowerCase(), password);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       navigateByRole(loggedUser.role);
     } catch (err: any) {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       Alert.alert("Login Failed", err.message || "Invalid credentials. Please check your email and password.");
     } finally {
       setLoading(false);
@@ -74,7 +70,7 @@ export default function LoginScreen() {
   function fillDemo(cred: typeof DEMO_CREDENTIALS[0]) {
     setEmail(cred.email);
     setPassword(cred.password);
-    Haptics.selectionAsync();
+    if (Platform.OS !== "web") Haptics.selectionAsync();
   }
 
   return (
@@ -86,6 +82,15 @@ export default function LoginScreen() {
           showsVerticalScrollIndicator={false}
         >
           <Animated.View style={[styles.inner, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
+
+            {/* Made in Bharat badge */}
+            <View style={styles.bharatBadge}>
+              <View style={[styles.bharatDot, { backgroundColor: "#FF9933" }]} />
+              <View style={[styles.bharatDot, { backgroundColor: "#FFFFFF" }]} />
+              <View style={[styles.bharatDot, { backgroundColor: "#138808" }]} />
+              <Text style={styles.bharatBadgeText}>Made in Bharat 🇮🇳</Text>
+            </View>
+
             <View style={styles.header}>
               <LinearGradient colors={["#1D4ED8", "#3B82F6", "#06B6D4"]} style={styles.logoGrad}>
                 <MaterialCommunityIcons name="shield-lock" size={36} color="#FFF" />
@@ -99,7 +104,7 @@ export default function LoginScreen() {
               <Text style={styles.formTitle}>Sign In</Text>
 
               <View style={[styles.inputWrap, focusedField === "email" && styles.inputFocused]}>
-                <Feather name="mail" size={17} color={focusedField === "email" ? colors.primary : colors.mutedForeground} />
+                <MaterialCommunityIcons name="email-outline" size={18} color={focusedField === "email" ? colors.primary : colors.mutedForeground} />
                 <TextInput
                   style={styles.input}
                   placeholder="Email address"
@@ -115,7 +120,7 @@ export default function LoginScreen() {
               </View>
 
               <View style={[styles.inputWrap, focusedField === "password" && styles.inputFocused]}>
-                <Feather name="lock" size={17} color={focusedField === "password" ? colors.primary : colors.mutedForeground} />
+                <MaterialCommunityIcons name="lock-outline" size={18} color={focusedField === "password" ? colors.primary : colors.mutedForeground} />
                 <TextInput
                   style={styles.input}
                   placeholder="Password"
@@ -128,16 +133,11 @@ export default function LoginScreen() {
                   onBlur={() => setFocusedField(null)}
                 />
                 <TouchableOpacity onPress={() => setShowPassword(!showPassword)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-                  <Feather name={showPassword ? "eye-off" : "eye"} size={17} color={colors.mutedForeground} />
+                  <MaterialCommunityIcons name={showPassword ? "eye-off-outline" : "eye-outline"} size={18} color={colors.mutedForeground} />
                 </TouchableOpacity>
               </View>
 
-              <TouchableOpacity
-                onPress={handleLogin}
-                disabled={loading}
-                activeOpacity={0.85}
-                style={{ marginTop: 8 }}
-              >
+              <TouchableOpacity onPress={handleLogin} disabled={loading} activeOpacity={0.85} style={{ marginTop: 8 }}>
                 <LinearGradient
                   colors={loading ? ["#334155", "#334155"] : ["#1D4ED8", "#3B82F6"]}
                   style={styles.loginBtn}
@@ -148,7 +148,7 @@ export default function LoginScreen() {
                     <Text style={styles.loginBtnText}>Signing in...</Text>
                   ) : (
                     <>
-                      <Feather name="log-in" size={18} color="#FFF" />
+                      <MaterialCommunityIcons name="login" size={18} color="#FFF" />
                       <Text style={styles.loginBtnText}>Sign In</Text>
                     </>
                   )}
@@ -163,6 +163,7 @@ export default function LoginScreen() {
               </TouchableOpacity>
             </View>
 
+            {/* Demo Access */}
             <View style={styles.demoSection}>
               <View style={styles.dividerRow}>
                 <View style={styles.divider} />
@@ -177,15 +178,14 @@ export default function LoginScreen() {
                     onPress={() => fillDemo(cred)}
                     activeOpacity={0.7}
                   >
-                    <View style={[styles.demoDot, { backgroundColor: cred.color }]} />
-                    <Text style={[styles.demoBtnLabel, { color: cred.color, fontFamily: "Inter_600SemiBold" }]}>
-                      {cred.label}
-                    </Text>
+                    <MaterialCommunityIcons name={cred.icon} size={14} color={cred.color} />
+                    <Text style={[styles.demoBtnLabel, { color: cred.color }]}>{cred.label}</Text>
                   </TouchableOpacity>
                 ))}
               </View>
             </View>
 
+            {/* Features */}
             <View style={styles.features}>
               {["Bug Bounty Rewards", "AI Mentor RakshBot", "CERT-In Certified"].map(f => (
                 <View key={f} style={styles.featureItem}>
@@ -195,7 +195,10 @@ export default function LoginScreen() {
               ))}
             </View>
 
-            <Text style={styles.footer}>CyberShield India · Owned by Kartik Chilkoti</Text>
+            {/* Footer */}
+            <View style={styles.footerRow}>
+              <Text style={styles.footer}>CyberShield India · Owned by Kartik Chilkoti</Text>
+            </View>
           </Animated.View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -206,6 +209,9 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: { flexGrow: 1, paddingHorizontal: 24, alignItems: "center" },
   inner: { width: "100%", alignItems: "center", gap: 20 },
+  bharatBadge: { flexDirection: "row", alignItems: "center", gap: 7, paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, backgroundColor: "rgba(255,255,255,0.05)", borderWidth: 1, borderColor: "rgba(255,255,255,0.1)" },
+  bharatDot: { width: 7, height: 7, borderRadius: 4 },
+  bharatBadgeText: { color: "rgba(255,255,255,0.6)", fontSize: 12, fontFamily: "Inter_600SemiBold" },
   header: { alignItems: "center", gap: 12, marginBottom: 4 },
   logoGrad: { width: 80, height: 80, borderRadius: 22, alignItems: "center", justifyContent: "center" },
   title: { color: "#F8FAFC", fontSize: 26, fontFamily: "Inter_700Bold", letterSpacing: 0.3 },
@@ -225,10 +231,10 @@ const styles = StyleSheet.create({
   dividerText: { color: "rgba(255,255,255,0.35)", fontSize: 12, fontFamily: "Inter_400Regular" },
   demoGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
   demoBtn: { flexBasis: "47%", flexGrow: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, paddingVertical: 12, borderRadius: 12, borderWidth: 1, backgroundColor: "rgba(255,255,255,0.03)" },
-  demoDot: { width: 6, height: 6, borderRadius: 3 },
-  demoBtnLabel: { fontSize: 13 },
+  demoBtnLabel: { fontSize: 13, fontFamily: "Inter_600SemiBold" },
   features: { flexDirection: "row", flexWrap: "wrap", gap: 12, justifyContent: "center" },
   featureItem: { flexDirection: "row", alignItems: "center", gap: 4 },
   featureText: { color: "rgba(255,255,255,0.4)", fontSize: 11, fontFamily: "Inter_400Regular" },
+  footerRow: { alignItems: "center", gap: 4 },
   footer: { color: "rgba(255,255,255,0.2)", fontSize: 11, fontFamily: "Inter_400Regular", textAlign: "center" },
 });

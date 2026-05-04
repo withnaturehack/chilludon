@@ -5,7 +5,7 @@ import {
 } from "react-native";
 import { useQuery } from "@tanstack/react-query";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useColors } from "@/hooks/useColors";
 import { useApi } from "@/hooks/useApi";
@@ -47,7 +47,7 @@ export default function CitizenAlerts() {
         <View style={styles.headerRow}>
           <View>
             <View style={styles.headerBadge}>
-              <Feather name="alert-triangle" size={12} color="#F97316" />
+              <MaterialCommunityIcons name="alert" size={12} color="#F97316" />
               <Text style={styles.headerBadgeText}>Threat Intelligence</Text>
             </View>
             <Text style={styles.headerTitle}>Live Alerts</Text>
@@ -94,7 +94,7 @@ export default function CitizenAlerts() {
           <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }], gap: 12, paddingTop: 4 }}>
             {filtered.length === 0 && (
               <View style={styles.emptyState}>
-                <Feather name="shield" size={40} color="rgba(255,255,255,0.2)" />
+                <MaterialCommunityIcons name="shield-outline" size={40} color="rgba(255,255,255,0.2)" />
                 <Text style={styles.emptyText}>No {filter === "all" ? "" : filter} alerts right now</Text>
               </View>
             )}
@@ -121,7 +121,7 @@ export default function CitizenAlerts() {
                   <Text style={styles.alertDesc} numberOfLines={3}>{alert.description}</Text>
                   <View style={styles.alertFooter}>
                     <View style={styles.sourceRow}>
-                      <Feather name="globe" size={11} color="rgba(255,255,255,0.35)" />
+                      <MaterialCommunityIcons name="web" size={11} color="rgba(255,255,255,0.35)" />
                       <Text style={styles.sourceText}>{alert.source}</Text>
                     </View>
                     {alert.category && (

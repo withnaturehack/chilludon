@@ -4,7 +4,7 @@ import {
   Animated, Platform,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 
 const THREAT_LEVEL = { level: "HIGH", color: "#F97316", grad: ["#C2410C", "#F97316"] as [string, string] };
@@ -162,7 +162,7 @@ export default function IntelligenceScreen() {
                 </View>
                 <Text style={styles.alertTitle}>{alert.title}</Text>
                 <View style={styles.alertBottom}>
-                  <Feather name="target" size={12} color="rgba(255,255,255,0.3)" />
+                  <MaterialCommunityIcons name="target" size={12} color="rgba(255,255,255,0.3)" />
                   <Text style={styles.alertAffected}>Affects: {alert.affected}</Text>
                   <View style={styles.alertIdBadge}>
                     <Text style={styles.alertId}>{alert.id}</Text>
