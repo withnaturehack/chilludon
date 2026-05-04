@@ -22,13 +22,16 @@ SplashScreen.preventAutoHideAsync();
 
 const queryClient = new QueryClient();
 
-// On native (Expo Go on phone) the browser mTLS proxy is bypassed — reach
-// the API directly on its publicly-exposed port 8080.
-// On web (Replit in-browser preview) the proxy handles routing on port 443.
+// Web (browser): always use the domain directly — proxy or mTLS handles routing.
+// Native dev (Expo Go): EXPO_PUBLIC_API_PORT=8080 is set in the dev script so
+//   the phone bypasses the mTLS proxy and hits the publicly-exposed port.
+// Native prod (chilludon.replit.app): no port set — serve.js proxies /api/ to
+//   localhost:8080 so the same domain works for everything.
 const domain = process.env.EXPO_PUBLIC_DOMAIN ?? "";
-const apiBase = Platform.OS === "web"
+const apiPort = process.env.EXPO_PUBLIC_API_PORT;
+const apiBase = Platform.OS === "web" || !apiPort
   ? `https://${domain}`
-  : `https://${domain}:8080`;
+  : `https://${domain}:${apiPort}`;
 setBaseUrl(apiBase);
 
 function RootLayoutNav() {
