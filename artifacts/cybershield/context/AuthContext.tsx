@@ -24,8 +24,8 @@ interface AuthContextType {
   user: User | null;
   token: string | null;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  register: (data: RegisterData) => Promise<void>;
+  login: (email: string, password: string) => Promise<User>;
+  register: (data: RegisterData) => Promise<User>;
   logout: () => void;
   refreshUser: () => Promise<void>;
 }
@@ -75,7 +75,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  const login = useCallback(async (email: string, password: string) => {
+  const login = useCallback(async (email: string, password: string): Promise<User> => {
     const res = await fetch(`${API_BASE}/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -87,9 +87,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await AsyncStorage.setItem("auth_user", JSON.stringify(data.user));
     setToken(data.token);
     setUser(data.user);
+    return data.user as User;
   }, []);
 
-  const register = useCallback(async (registerData: RegisterData) => {
+  const register = useCallback(async (registerData: RegisterData): Promise<User> => {
     const res = await fetch(`${API_BASE}/auth/register`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -101,6 +102,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await AsyncStorage.setItem("auth_user", JSON.stringify(data.user));
     setToken(data.token);
     setUser(data.user);
+    return data.user as User;
   }, []);
 
   const refreshUser = useCallback(async () => {

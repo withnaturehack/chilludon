@@ -60,7 +60,6 @@ router.patch("/police/submissions/:id/review", authMiddleware, requireRole("poli
       return;
     }
 
-    // Award points to student if verified
     if (status === "verified" && points_awarded > 0 && submission.user_id) {
       const [student] = await db.select().from(usersTable).where(eq(usersTable.id, submission.user_id));
       if (student) {
@@ -72,7 +71,6 @@ router.patch("/police/submissions/:id/review", authMiddleware, requireRole("poli
       }
     }
 
-    // Create police case for escalated submissions
     if (status === "escalated") {
       const caseNumber = `CS-${Date.now()}`;
       await db.insert(policeCasesTable).values({
@@ -176,6 +174,43 @@ router.get("/police/stats", authMiddleware, requireRole("police", "admin"), asyn
       critical_submissions: Number(critical),
       total_submissions: Number(total),
       fraud_flagged: Number(fraud),
+    });
+  } catch (error) {
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.get("/police/intelligence", authMiddleware, requireRole("police", "admin"), async (req, res) => {
+  try {
+    const [{ total }] = await db.select({ total: sql<number>`count(*)` }).from(submissionsTable);
+    const [{ critical }] = await db.select({ critical: sql<number>`count(*)` }).from(submissionsTable).where(eq(submissionsTable.severity, "critical"));
+    const [{ high }] = await db.select({ high: sql<number>`count(*)` }).from(submissionsTable).where(eq(submissionsTable.severity, "high"));
+
+    res.json({
+      threat_level: Number(critical) > 5 ? "CRITICAL" : Number(high) > 10 ? "HIGH" : "MODERATE",
+      total_threats: Number(total),
+      critical_threats: Number(critical),
+      high_threats: Number(high),
+      last_updated: new Date().toISOString(),
+    });
+  } catch (error) {
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.get("/police/analytics", authMiddleware, requireRole("police", "admin"), async (req, res) => {
+  try {
+    const [{ total }] = await db.select({ total: sql<number>`count(*)` }).from(submissionsTable);
+    const [{ verified }] = await db.select({ verified: sql<number>`count(*)` }).from(submissionsTable).where(eq(submissionsTable.status, "verified"));
+    const [{ pending }] = await db.select({ pending: sql<number>`count(*)` }).from(submissionsTable).where(eq(submissionsTable.status, "pending"));
+    const [{ cases }] = await db.select({ cases: sql<number>`count(*)` }).from(policeCasesTable);
+
+    res.json({
+      total_reports: Number(total),
+      verified_reports: Number(verified),
+      pending_reports: Number(pending),
+      total_cases: Number(cases),
+      resolution_rate: Number(total) > 0 ? Math.round((Number(verified) / Number(total)) * 100) : 0,
     });
   } catch (error) {
     res.status(500).json({ error: "Internal server error" });

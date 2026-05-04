@@ -25,10 +25,11 @@ setBaseUrl(`https://${process.env.EXPO_PUBLIC_DOMAIN}`);
 
 function RootLayoutNav() {
   return (
-    <Stack screenOptions={{ headerShown: false }}>
+    <Stack screenOptions={{ headerShown: false, animation: "fade" }}>
       <Stack.Screen name="index" options={{ headerShown: false }} />
-      <Stack.Screen name="auth/login" options={{ headerShown: false }} />
-      <Stack.Screen name="auth/register" options={{ headerShown: false }} />
+      <Stack.Screen name="welcome" options={{ headerShown: false, animation: "fade" }} />
+      <Stack.Screen name="auth/login" options={{ headerShown: false, animation: "slide_from_right" }} />
+      <Stack.Screen name="auth/register" options={{ headerShown: false, animation: "slide_from_right" }} />
       <Stack.Screen name="(student)" options={{ headerShown: false }} />
       <Stack.Screen name="(police)" options={{ headerShown: false }} />
       <Stack.Screen name="(company)" options={{ headerShown: false }} />

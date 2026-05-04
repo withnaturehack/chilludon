@@ -17,6 +17,18 @@ const DEMO_CREDENTIALS = [
   { label: "Company", email: "company@cybershield.in", password: "Company@123", role: "company", color: "#F59E0B" },
 ];
 
+function navigateByRole(role: string) {
+  if (role === "student" || role === "admin") {
+    router.replace("/(student)");
+  } else if (role === "police") {
+    router.replace("/(police)");
+  } else if (role === "company") {
+    router.replace("/(company)");
+  } else {
+    router.replace("/(student)");
+  }
+}
+
 export default function LoginScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
@@ -45,11 +57,12 @@ export default function LoginScreen() {
     }
     setLoading(true);
     try {
-      await login(email.trim().toLowerCase(), password);
+      const loggedUser = await login(email.trim().toLowerCase(), password);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      navigateByRole(loggedUser.role);
     } catch (err: any) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      Alert.alert("Login Failed", err.message || "Invalid credentials");
+      Alert.alert("Login Failed", err.message || "Invalid credentials. Please check your email and password.");
     } finally {
       setLoading(false);
     }

@@ -66,15 +66,23 @@ export default function PoliceLayout() {
         }}
       />
       <Tabs.Screen
-        name="alerts"
+        name="intelligence"
         options={{
-          title: "Alerts",
+          title: "Intel",
           tabBarIcon: ({ color, focused }) => (
             focused
-              ? <View style={{ backgroundColor: "rgba(252,211,77,0.15)", borderRadius: 8, padding: 4 }}><Feather name="alert-triangle" size={20} color={color} /></View>
-              : <Feather name="alert-triangle" size={20} color={color} />
+              ? <View style={{ backgroundColor: "rgba(252,211,77,0.15)", borderRadius: 8, padding: 4 }}><MaterialCommunityIcons name="radar" size={20} color={color} /></View>
+              : <MaterialCommunityIcons name="radar" size={20} color={color} />
           ),
         }}
+      />
+      <Tabs.Screen
+        name="alerts"
+        options={{ href: null }}
+      />
+      <Tabs.Screen
+        name="analytics"
+        options={{ href: null }}
       />
     </Tabs>
   );

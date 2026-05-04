@@ -17,6 +17,18 @@ const ROLES = [
   { value: "company", label: "Company", icon: "domain", desc: "Run bounty programs", color: "#F59E0B" },
 ];
 
+function navigateByRole(role: string) {
+  if (role === "student" || role === "admin") {
+    router.replace("/(student)");
+  } else if (role === "police") {
+    router.replace("/(police)");
+  } else if (role === "company") {
+    router.replace("/(company)");
+  } else {
+    router.replace("/(student)");
+  }
+}
+
 function InputField({ label, value, onChangeText, icon, placeholder, secureTextEntry, keyboardType, autoCapitalize, colors }: any) {
   const [showPass, setShowPass] = useState(false);
   const [focused, setFocused] = useState(false);
@@ -85,13 +97,14 @@ export default function RegisterScreen() {
     }
     setLoading(true);
     try {
-      await register({
+      const newUser = await register({
         name, email: email.trim().toLowerCase(), password, role,
         college_name: collegeName, state,
         station_name: stationName, badge_number: badgeNumber,
         company_name: companyName,
       });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      navigateByRole(newUser.role);
     } catch (err: any) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       Alert.alert("Registration Failed", err.message);

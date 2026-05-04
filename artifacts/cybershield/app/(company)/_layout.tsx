@@ -65,6 +65,18 @@ export default function CompanyLayout() {
           ),
         }}
       />
+      <Tabs.Screen
+        name="researchers"
+        options={{
+          title: "Researchers",
+          tabBarIcon: ({ color, focused }) => (
+            focused
+              ? <View style={{ backgroundColor: "rgba(6,182,212,0.15)", borderRadius: 8, padding: 4 }}><MaterialCommunityIcons name="account-star-outline" size={20} color={color} /></View>
+              : <MaterialCommunityIcons name="account-star-outline" size={20} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen name="reports" options={{ href: null }} />
     </Tabs>
   );
 }

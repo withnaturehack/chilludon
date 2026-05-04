@@ -4,6 +4,7 @@ import { router } from "expo-router";
 import { useAuth } from "@/context/AuthContext";
 import { LinearGradient } from "expo-linear-gradient";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function IndexScreen() {
   const { user, isLoading } = useAuth();
@@ -26,12 +27,20 @@ export default function IndexScreen() {
 
   useEffect(() => {
     if (!isLoading) {
-      const timer = setTimeout(() => {
-        if (!user) router.replace("/auth/login");
-        else if (user.role === "student" || user.role === "admin") router.replace("/(student)");
-        else if (user.role === "police") router.replace("/(police)");
-        else if (user.role === "company") router.replace("/(company)");
-      }, 800);
+      const timer = setTimeout(async () => {
+        if (user) {
+          if (user.role === "student" || user.role === "admin") router.replace("/(student)");
+          else if (user.role === "police") router.replace("/(police)");
+          else if (user.role === "company") router.replace("/(company)");
+        } else {
+          const seen = await AsyncStorage.getItem("welcome_seen");
+          if (seen) {
+            router.replace("/auth/login");
+          } else {
+            router.replace("/welcome");
+          }
+        }
+      }, 1200);
       return () => clearTimeout(timer);
     }
   }, [user, isLoading]);
