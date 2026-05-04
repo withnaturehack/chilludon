@@ -101,6 +101,15 @@ export default function StudentLayout() {
           ),
         }}
       />
+      {/* Hidden screens — navigable but not shown as tabs */}
+      <Tabs.Screen name="leaderboard" options={{ href: null }} />
+      <Tabs.Screen name="wallet" options={{ href: null }} />
+      <Tabs.Screen name="achievements" options={{ href: null }} />
+      <Tabs.Screen name="learn" options={{ href: null }} />
+      <Tabs.Screen name="internships" options={{ href: null }} />
+      <Tabs.Screen name="submissions" options={{ href: null }} />
+      <Tabs.Screen name="alerts" options={{ href: null }} />
+      <Tabs.Screen name="profile" options={{ href: null }} />
     </Tabs>
   );
 }

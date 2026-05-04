@@ -70,6 +70,10 @@ pnpm workspace monorepo using TypeScript. Full-stack national cybersecurity plat
 - All screens use `LinearGradient` headers, `Animated.Value` fade+slide on mount
 - `expo-linear-gradient`, `expo-haptics`, `@expo/vector-icons` (Feather + MaterialCommunityIcons)
 
+### Workflows
+- **API Server**: `PORT=8080 pnpm --filter @workspace/api-server run dev` (port 8080)
+- **CyberShield App**: `PORT=21985 pnpm --filter @workspace/cybershield run dev` (port 21985)
+
 ### API Base
 - `https://${process.env.EXPO_PUBLIC_DOMAIN}/api` — via `useApi.ts`
 
