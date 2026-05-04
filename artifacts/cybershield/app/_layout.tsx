@@ -9,6 +9,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import React, { useEffect } from "react";
+import { Platform } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaProvider } from "react-native-safe-area-context";
@@ -21,7 +22,14 @@ SplashScreen.preventAutoHideAsync();
 
 const queryClient = new QueryClient();
 
-setBaseUrl(`https://${process.env.EXPO_PUBLIC_DOMAIN}`);
+// On native (Expo Go on phone) the browser mTLS proxy is bypassed — reach
+// the API directly on its publicly-exposed port 8080.
+// On web (Replit in-browser preview) the proxy handles routing on port 443.
+const domain = process.env.EXPO_PUBLIC_DOMAIN ?? "";
+const apiBase = Platform.OS === "web"
+  ? `https://${domain}`
+  : `https://${domain}:8080`;
+setBaseUrl(apiBase);
 
 function RootLayoutNav() {
   return (
