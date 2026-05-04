@@ -1,0 +1,1139 @@
+# 🛡️ REPLIT AGENT PROMPT — CyberShield India
+## Copy this ENTIRE prompt into Replit Agent
+
+---
+
+Build me a complete, fully working full-stack web application called **CyberShield India** — a national cybersecurity platform for India. Every single feature must be 100% working with real data, real authentication, real database, and real API calls. No mock data, no placeholder text, no "coming soon" sections. Everything functional from day one.
+
+---
+
+## TECH STACK — USE EXACTLY THIS
+
+**Frontend:** React + Vite + TypeScript + TailwindCSS  
+**Backend:** Node.js + Express + TypeScript  
+**Database:** SQLite with better-sqlite3 (no external DB needed — works natively in Replit)  
+**Auth:** JWT + bcryptjs  
+**Real-time:** Socket.io  
+**AI (RakshBot):** Anthropic Claude API  
+**File Upload:** Multer (local storage in Replit)  
+**State:** Zustand  
+**HTTP Client:** Axios  
+**Icons:** Lucide React  
+**Charts:** Recharts  
+**Routing:** React Router v6  
+**Notifications:** react-hot-toast  
+
+---
+
+## PROJECT STRUCTURE
+
+```
+cybershield-india/
+├── client/                          # React Frontend
+│   ├── src/
+│   │   ├── pages/
+│   │   │   ├── auth/
+│   │   │   │   ├── Login.tsx
+│   │   │   │   └── Register.tsx
+│   │   │   ├── student/
+│   │   │   │   ├── Dashboard.tsx
+│   │   │   │   ├── Submit.tsx
+│   │   │   │   ├── Submissions.tsx
+│   │   │   │   ├── Leaderboard.tsx
+│   │   │   │   ├── Learn.tsx
+│   │   │   │   ├── Achievements.tsx
+│   │   │   │   ├── Wallet.tsx
+│   │   │   │   ├── Internships.tsx
+│   │   │   │   ├── Profile.tsx
+│   │   │   │   └── RakshBot.tsx
+│   │   │   ├── police/
+│   │   │   │   ├── Dashboard.tsx
+│   │   │   │   ├── Monitoring.tsx
+│   │   │   │   ├── Cases.tsx
+│   │   │   │   ├── Watchlist.tsx
+│   │   │   │   └── ReviewSubmission.tsx
+│   │   │   ├── company/
+│   │   │   │   ├── Dashboard.tsx
+│   │   │   │   ├── BountyPrograms.tsx
+│   │   │   │   └── PostInternship.tsx
+│   │   │   └── Landing.tsx
+│   │   ├── components/
+│   │   │   ├── layout/
+│   │   │   │   ├── StudentLayout.tsx
+│   │   │   │   ├── PoliceLayout.tsx
+│   │   │   │   └── CompanyLayout.tsx
+│   │   │   ├── ui/
+│   │   │   │   ├── StatCard.tsx
+│   │   │   │   ├── SubmissionCard.tsx
+│   │   │   │   ├── AlertCard.tsx
+│   │   │   │   ├── BadgeCard.tsx
+│   │   │   │   └── Modal.tsx
+│   │   │   └── ProtectedRoute.tsx
+│   │   ├── store/
+│   │   │   ├── authStore.ts
+│   │   │   └── notificationStore.ts
+│   │   ├── hooks/
+│   │   │   └── useApi.ts
+│   │   ├── lib/
+│   │   │   └── api.ts
+│   │   └── main.tsx
+│   ├── index.html
+│   └── package.json
+├── server/                          # Express Backend
+│   ├── src/
+│   │   ├── database/
+│   │   │   ├── init.ts              # DB schema creation
+│   │   │   └── seed.ts              # Seed real data
+│   │   ├── routes/
+│   │   │   ├── auth.ts
+│   │   │   ├── submissions.ts
+│   │   │   ├── leaderboard.ts
+│   │   │   ├── rewards.ts
+│   │   │   ├── internships.ts
+│   │   │   ├── police.ts
+│   │   │   ├── courses.ts
+│   │   │   ├── achievements.ts
+│   │   │   ├── alerts.ts
+│   │   │   ├── ctf.ts
+│   │   │   ├── companies.ts
+│   │   │   └── rakshbot.ts
+│   │   ├── middleware/
+│   │   │   ├── auth.ts
+│   │   │   └── upload.ts
+│   │   ├── socket/
+│   │   │   └── events.ts
+│   │   └── server.ts
+│   ├── uploads/                     # File uploads stored here
+│   ├── cybershield.db               # SQLite DB file
+│   └── package.json
+├── .env
+└── package.json                     # Root - runs both
+```
+
+---
+
+## DATABASE SCHEMA — CREATE ALL TABLES IN `server/src/database/init.ts`
+
+Use better-sqlite3 (synchronous). Create all tables if they don't exist:
+
+```sql
+-- USERS
+CREATE TABLE IF NOT EXISTS users (
+  id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+  name TEXT NOT NULL,
+  email TEXT UNIQUE NOT NULL,
+  phone TEXT,
+  password_hash TEXT NOT NULL,
+  role TEXT CHECK(role IN ('student','police','company','admin')) DEFAULT 'student',
+  college_name TEXT,
+  college_city TEXT,
+  state TEXT,
+  student_id_url TEXT,
+  skill_level TEXT DEFAULT 'beginner',
+  skill_score INTEGER DEFAULT 0,
+  total_points INTEGER DEFAULT 0,
+  national_rank INTEGER,
+  state_rank INTEGER,
+  total_earned REAL DEFAULT 0,
+  wallet_balance REAL DEFAULT 0,
+  is_verified INTEGER DEFAULT 0,
+  is_banned INTEGER DEFAULT 0,
+  fraud_flag_count INTEGER DEFAULT 0,
+  avatar_url TEXT,
+  bio TEXT,
+  github_url TEXT,
+  linkedin_url TEXT,
+  station_name TEXT,
+  station_id TEXT,
+  badge_number TEXT,
+  jurisdiction_state TEXT,
+  jurisdiction_city TEXT,
+  company_name TEXT,
+  company_website TEXT,
+  gst_number TEXT,
+  created_at TEXT DEFAULT (datetime('now')),
+  updated_at TEXT DEFAULT (datetime('now')),
+  last_login TEXT
+);
+
+-- SUBMISSIONS
+CREATE TABLE IF NOT EXISTS submissions (
+  id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+  user_id TEXT REFERENCES users(id),
+  title TEXT NOT NULL,
+  description TEXT NOT NULL,
+  type TEXT CHECK(type IN ('vulnerability','fraud_report','research','ctf_solution')) NOT NULL,
+  severity TEXT CHECK(severity IN ('critical','high','medium','low','info')),
+  category TEXT CHECK(category IN ('web','network','mobile','social_engineering','financial','hardware','malware','osint','other')),
+  proof_files TEXT DEFAULT '[]',
+  video_url TEXT,
+  screenshots TEXT DEFAULT '[]',
+  steps_to_reproduce TEXT,
+  impact_description TEXT,
+  fix_suggestion TEXT,
+  target_url TEXT,
+  affected_system TEXT,
+  ai_plagiarism_score REAL DEFAULT 0,
+  ai_analysis TEXT,
+  status TEXT DEFAULT 'pending' CHECK(status IN ('pending','under_review','verified','rejected','fraud','escalated')),
+  reviewer_id TEXT REFERENCES users(id),
+  reviewer_notes TEXT,
+  reviewed_at TEXT,
+  assigned_department TEXT,
+  escalated_to TEXT,
+  points_awarded INTEGER DEFAULT 0,
+  created_at TEXT DEFAULT (datetime('now')),
+  updated_at TEXT DEFAULT (datetime('now'))
+);
+
+-- REWARDS
+CREATE TABLE IF NOT EXISTS rewards (
+  id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+  submission_id TEXT REFERENCES submissions(id),
+  user_id TEXT REFERENCES users(id),
+  amount REAL NOT NULL,
+  currency TEXT DEFAULT 'INR',
+  source TEXT CHECK(source IN ('government','corporate','platform','bounty')),
+  source_org TEXT,
+  status TEXT DEFAULT 'pending' CHECK(status IN ('pending','approved','paid','frozen','cancelled')),
+  frozen_reason TEXT,
+  payment_reference TEXT,
+  approved_by TEXT REFERENCES users(id),
+  approved_at TEXT,
+  paid_at TEXT,
+  created_at TEXT DEFAULT (datetime('now'))
+);
+
+-- BADGES
+CREATE TABLE IF NOT EXISTS badges (
+  id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+  name TEXT NOT NULL,
+  description TEXT,
+  icon TEXT,
+  category TEXT,
+  points_required INTEGER DEFAULT 0,
+  is_rare INTEGER DEFAULT 0,
+  color TEXT,
+  emoji TEXT
+);
+
+-- USER_BADGES
+CREATE TABLE IF NOT EXISTS user_badges (
+  id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+  user_id TEXT REFERENCES users(id),
+  badge_id TEXT REFERENCES badges(id),
+  earned_at TEXT DEFAULT (datetime('now')),
+  UNIQUE(user_id, badge_id)
+);
+
+-- COURSES
+CREATE TABLE IF NOT EXISTS courses (
+  id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+  title TEXT NOT NULL,
+  description TEXT,
+  thumbnail_url TEXT,
+  instructor_name TEXT,
+  instructor_org TEXT,
+  level TEXT,
+  category TEXT,
+  language TEXT DEFAULT 'English',
+  duration_hours REAL,
+  total_lessons INTEGER DEFAULT 0,
+  is_free INTEGER DEFAULT 1,
+  price REAL DEFAULT 0,
+  is_certified INTEGER DEFAULT 0,
+  enrolled_count INTEGER DEFAULT 0,
+  rating REAL DEFAULT 4.5,
+  tags TEXT DEFAULT '[]',
+  created_at TEXT DEFAULT (datetime('now'))
+);
+
+-- COURSE_ENROLLMENTS
+CREATE TABLE IF NOT EXISTS course_enrollments (
+  id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+  user_id TEXT REFERENCES users(id),
+  course_id TEXT REFERENCES courses(id),
+  progress_percent INTEGER DEFAULT 0,
+  started_at TEXT DEFAULT (datetime('now')),
+  completed_at TEXT,
+  UNIQUE(user_id, course_id)
+);
+
+-- INTERNSHIPS
+CREATE TABLE IF NOT EXISTS internships (
+  id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+  org_id TEXT REFERENCES users(id),
+  org_type TEXT CHECK(org_type IN ('government','private')),
+  org_name TEXT NOT NULL,
+  title TEXT NOT NULL,
+  description TEXT,
+  requirements TEXT,
+  duration_months INTEGER,
+  location_type TEXT CHECK(location_type IN ('remote','onsite','hybrid')),
+  location_city TEXT,
+  location_state TEXT,
+  stipend_amount REAL,
+  required_min_rank INTEGER,
+  required_skill_score INTEGER,
+  total_seats INTEGER DEFAULT 1,
+  filled_seats INTEGER DEFAULT 0,
+  status TEXT DEFAULT 'open' CHECK(status IN ('open','closed','filled')),
+  application_deadline TEXT,
+  start_date TEXT,
+  perks TEXT DEFAULT '[]',
+  is_govt_certified INTEGER DEFAULT 0,
+  logo_url TEXT,
+  created_at TEXT DEFAULT (datetime('now'))
+);
+
+-- INTERNSHIP_APPLICATIONS
+CREATE TABLE IF NOT EXISTS internship_applications (
+  id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+  internship_id TEXT REFERENCES internships(id),
+  user_id TEXT REFERENCES users(id),
+  cover_letter TEXT,
+  status TEXT DEFAULT 'applied' CHECK(status IN ('applied','shortlisted','interview','selected','rejected')),
+  offer_letter_url TEXT,
+  applied_at TEXT DEFAULT (datetime('now')),
+  UNIQUE(internship_id, user_id)
+);
+
+-- POLICE_CASES
+CREATE TABLE IF NOT EXISTS police_cases (
+  id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+  submission_id TEXT REFERENCES submissions(id),
+  police_station_id TEXT REFERENCES users(id),
+  assigned_officer_id TEXT REFERENCES users(id),
+  case_number TEXT UNIQUE,
+  status TEXT DEFAULT 'open' CHECK(status IN ('open','investigating','resolved','closed','escalated')),
+  evidence_package_url TEXT,
+  fir_number TEXT,
+  notes TEXT,
+  resolution_notes TEXT,
+  priority TEXT DEFAULT 'medium' CHECK(priority IN ('critical','high','medium','low')),
+  created_at TEXT DEFAULT (datetime('now')),
+  updated_at TEXT DEFAULT (datetime('now')),
+  resolved_at TEXT
+);
+
+-- CYBER_ALERTS
+CREATE TABLE IF NOT EXISTS cyber_alerts (
+  id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+  title TEXT NOT NULL,
+  description TEXT,
+  severity TEXT CHECK(severity IN ('critical','high','medium','low')),
+  category TEXT,
+  affected_states TEXT DEFAULT '[]',
+  source TEXT,
+  is_active INTEGER DEFAULT 1,
+  is_verified INTEGER DEFAULT 0,
+  reported_by TEXT REFERENCES users(id),
+  created_at TEXT DEFAULT (datetime('now'))
+);
+
+-- CTF_CHALLENGES
+CREATE TABLE IF NOT EXISTS ctf_challenges (
+  id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+  title TEXT NOT NULL,
+  description TEXT,
+  category TEXT,
+  difficulty TEXT CHECK(difficulty IN ('easy','medium','hard','expert')),
+  points INTEGER DEFAULT 100,
+  flag TEXT,
+  hints TEXT DEFAULT '[]',
+  attachment_url TEXT,
+  is_active INTEGER DEFAULT 1,
+  solve_count INTEGER DEFAULT 0,
+  created_at TEXT DEFAULT (datetime('now'))
+);
+
+-- CTF_SOLUTIONS
+CREATE TABLE IF NOT EXISTS ctf_solutions (
+  id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+  challenge_id TEXT REFERENCES ctf_challenges(id),
+  user_id TEXT REFERENCES users(id),
+  is_correct INTEGER DEFAULT 0,
+  time_taken_seconds INTEGER,
+  solved_at TEXT DEFAULT (datetime('now')),
+  UNIQUE(challenge_id, user_id)
+);
+
+-- WALLET_TRANSACTIONS
+CREATE TABLE IF NOT EXISTS wallet_transactions (
+  id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+  user_id TEXT REFERENCES users(id),
+  type TEXT CHECK(type IN ('credit','debit','withdrawal','bonus')),
+  amount REAL NOT NULL,
+  balance_after REAL,
+  description TEXT,
+  reference_id TEXT,
+  status TEXT DEFAULT 'completed',
+  created_at TEXT DEFAULT (datetime('now'))
+);
+
+-- BUG_BOUNTY_PROGRAMS
+CREATE TABLE IF NOT EXISTS bug_bounty_programs (
+  id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+  company_id TEXT REFERENCES users(id),
+  company_name TEXT NOT NULL,
+  title TEXT NOT NULL,
+  description TEXT,
+  scope TEXT,
+  out_of_scope TEXT,
+  min_reward REAL,
+  max_reward REAL,
+  status TEXT DEFAULT 'active',
+  total_paid REAL DEFAULT 0,
+  total_reports INTEGER DEFAULT 0,
+  logo_url TEXT,
+  created_at TEXT DEFAULT (datetime('now'))
+);
+
+-- NOTIFICATIONS
+CREATE TABLE IF NOT EXISTS notifications (
+  id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+  user_id TEXT REFERENCES users(id),
+  title TEXT NOT NULL,
+  message TEXT,
+  type TEXT,
+  is_read INTEGER DEFAULT 0,
+  action_url TEXT,
+  created_at TEXT DEFAULT (datetime('now'))
+);
+
+-- CHAT_MESSAGES (RakshBot history per user)
+CREATE TABLE IF NOT EXISTS chat_messages (
+  id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+  user_id TEXT REFERENCES users(id),
+  role TEXT CHECK(role IN ('user','assistant')),
+  content TEXT NOT NULL,
+  created_at TEXT DEFAULT (datetime('now'))
+);
+```
+
+---
+
+## SEED DATA — CREATE IN `server/src/database/seed.ts`
+
+Insert all this real data when database is first created. Check if data already exists before inserting (use INSERT OR IGNORE).
+
+### Admin User
+```
+name: "CyberShield Admin"
+email: "admin@cybershield.in"
+password: "Admin@123" (bcrypt hashed)
+role: "admin"
+```
+
+### Police User
+```
+name: "Inspector Ramesh Kumar"
+email: "police@cybershield.in"
+password: "Police@123"
+role: "police"
+station_name: "Delhi Cyber Crime Cell"
+station_id: "DL-CYB-001"
+badge_number: "IPS-4521"
+jurisdiction_state: "Delhi"
+jurisdiction_city: "New Delhi"
+```
+
+### Company User
+```
+name: "TechCorp Security"
+email: "company@cybershield.in"
+password: "Company@123"
+role: "company"
+company_name: "TechCorp India Pvt. Ltd."
+company_website: "https://techcorp.in"
+```
+
+### 10 Student Users (with realistic Indian names, colleges, states)
+Create these students with bcrypt password "Student@123" for all:
+1. Arjun Sharma — IIT Delhi — Delhi — 2450 points — rank 1
+2. Priya Patel — NIT Surat — Gujarat — 2100 points — rank 2
+3. Rohit Verma — VIT Vellore — Tamil Nadu — 1850 points — rank 3
+4. Sneha Reddy — IIIT Hyderabad — Telangana — 1600 points — rank 4
+5. Amit Kumar — DTU Delhi — Delhi — 1420 points — rank 5
+6. Kavya Nair — NIT Calicut — Kerala — 1280 points — rank 6
+7. Vikram Singh — BITS Pilani — Rajasthan — 1150 points — rank 7
+8. Divya Menon — Amrita University — Kerala — 980 points — rank 8
+9. Rahul Gupta — Jadavpur University — West Bengal — 820 points — rank 9
+10. Ananya Iyer — Anna University — Tamil Nadu — 650 points — rank 10
+
+All student emails: arjun@student.in, priya@student.in, rohit@student.in, etc.
+
+### Badges (insert all 15)
+1. First Blood | 🩸 | finding | "Submitted first verified vulnerability" | #ef4444
+2. Zero Day Hunter | ⚡ | finding | "Discovered unpatched zero-day" | #f97316 | rare
+3. Gov Guardian | 🛡️ | government | "Reported government portal bug" | #3b82f6 | rare
+4. Bank Buster | 🏦 | finding | "Found financial system vulnerability" | #10b981 | rare
+5. Eagle Eye | 👁️ | finding | "10 verified findings in one month" | #8b5cf6
+6. Patch Master | 🔧 | fixing | "Fix suggestion was officially adopted" | #06b6d4
+7. Bug Doctor | 💊 | fixing | "Helped fix 50+ vulnerabilities" | #ec4899 | rare
+8. CTF Warrior | ⚔️ | learning | "Won 5 CTF challenges" | #f59e0b
+9. Knowledge Seeker | 📚 | learning | "Completed 10 skill modules" | #84cc16
+10. CERT-In Recognized | 🏆 | government | "Officially recognized by CERT-In" | #f97316 | rare
+11. Integrity Hero | ✅ | special | "Caught fraudulent submission" | #10b981 | rare
+12. National Cyber Hero | ⭐ | government | "Lifetime national contributor" | #fbbf24 | rare
+13. Rapid Responder | ⏱️ | fixing | "Fixed critical bug within 24hrs" | #ef4444
+14. Dark Web Spotter | 🌑 | finding | "Identified data in dark web breach" | #7c3aed | rare
+15. Team Player | 👥 | special | "Won a team CTF challenge" | #0ea5e9
+
+### Award badges to students
+- Arjun: First Blood, Eagle Eye, Zero Day Hunter, CTF Warrior, CERT-In Recognized
+- Priya: First Blood, Gov Guardian, Patch Master
+- Rohit: First Blood, CTF Warrior, Knowledge Seeker
+- Sneha: First Blood, Bank Buster, Rapid Responder
+- Amit: First Blood, Team Player
+- Others: First Blood only
+
+### Courses (insert 8 real courses)
+1. "Ethical Hacking Fundamentals" | beginner | 8hrs | Free | Certified | Instructor: Rajesh Kumar (CERT-In) | Tags: beginner, ethical hacking, basics | 1240 enrolled | 4.8 rating
+2. "Web Application Security — OWASP Top 10" | intermediate | 15hrs | Free | Certified | Instructor: Dr. Priya Sharma (IIT Delhi) | 980 enrolled | 4.9 rating
+3. "Network Penetration Testing" | advanced | 20hrs | Paid ₹999 | Certified | Instructor: Amit Singh (Lucideus) | 542 enrolled | 4.7 rating
+4. "Digital Forensics & Investigation" | beginner | 10hrs | Free | Instructor: Inspector Suresh Rao (Cyber Police Mumbai) | 1680 enrolled | 4.6 rating
+5. "Bug Bounty Hunting Masterclass" | intermediate | 12hrs | Free | Instructor: Mohit Verma (HackerOne India) | 2100 enrolled | 4.9 rating
+6. "Mobile App Security Testing" | intermediate | 14hrs | Paid ₹799 | Certified | Instructor: Kavitha Reddy (NASSCOM) | 678 enrolled | 4.5 rating
+7. "OSINT & Reconnaissance Techniques" | beginner | 8hrs | Free | Hindi language | Instructor: Deepak Nair (CBI Cyber) | 1890 enrolled | 4.7 rating
+8. "Malware Analysis & Reverse Engineering" | expert | 25hrs | Paid ₹1499 | Certified | Instructor: Dr. Anand Krishnan (DRDO) | 334 enrolled | 4.8 rating
+
+### Submissions (insert 15 realistic submissions)
+Mix of statuses: verified, pending, under_review, rejected
+
+Examples:
+1. "SQL Injection in State Bank Portal Login" | Arjun | critical | web | verified | 500 points | steps: "1. Go to login page 2. Enter ' OR 1=1-- in username 3. Any password 4. Full admin access" | target: sbi.co.in/login | impact: "Full database access, 450M customer records at risk" | fix: "Use parameterized queries, input sanitization"
+
+2. "XSS Stored in IRCTC Profile Section" | Priya | high | web | verified | 300 points | target: irctc.co.in
+
+3. "Open Redirect in Aadhaar Portal" | Rohit | medium | web | verified | 150 points
+
+4. "UPI Phishing Campaign Targeting SBI Users" | Sneha | high | financial | verified | 250 points
+
+5. "RCE Vulnerability in Indian Railways API" | Arjun | critical | network | under_review | 0 points
+
+6. "Weak Password Policy in Delhi Metro App" | Amit | low | mobile | verified | 75 points
+
+7. "Exposed AWS S3 Bucket — BSNL Customer Data" | Priya | critical | network | verified | 600 points
+
+8. "CSRF Token Missing in Income Tax Portal" | Kavya | medium | web | verified | 200 points
+
+9. "Malware Disguised as Aarogya Setu Update" | Vikram | high | malware | verified | 350 points
+
+10. "Social Engineering Kit Targeting Bank Employees" | Rohit | high | social_engineering | pending | 0 points
+
+11. "Insecure Direct Object Reference — EPFO Portal" | Divya | high | web | pending | 0 points
+
+12. "Fake UPI QR Code Generator Scam" | Rahul | medium | financial | verified | 175 points
+
+13. "Buffer Overflow in DRDO Internal Tool" | Arjun | critical | network | escalated | 0 points | escalated_to: "DRDO Cyber Division"
+
+14. "Hardcoded API Keys in Zomato Android App" | Ananya | high | mobile | verified | 280 points
+
+15. "OTP Bypass in Popular Indian E-commerce Site" | Amit | high | web | rejected | 0 points | reviewer_notes: "Could not reproduce the issue with provided steps"
+
+### Internships (insert 8 real internships)
+1. "Vulnerability Research Intern" | CERT-In | government | 3 months | Remote | ₹15000/month | Min rank 20 | 5 seats | Govt certified | Delhi
+2. "Cyber Investigation Support Intern" | I4C — Indian Cyber Crime Coordination Centre | government | 6 months | Onsite | ₹12000/month | Min rank 50 | 3 seats | Govt certified | New Delhi
+3. "Security Analyst Intern" | Quick Heal Technologies | private | 3 months | Hybrid | ₹20000/month | Min rank 100 | 10 seats | Pune
+4. "Bug Bounty Program Intern" | Razorpay | private | 4 months | Remote | ₹25000/month | Min rank 30 | 5 seats | Bangalore
+5. "Penetration Testing Intern" | Wipro Cybersecurity | private | 6 months | Hybrid | ₹18000/month | Min rank 75 | 8 seats | Multiple Cities
+6. "Threat Intelligence Intern" | Palo Alto Networks India | private | 3 months | Remote | ₹30000/month | Min rank 25 | 4 seats | Remote
+7. "Digital Forensics Intern" | CBI Cyber Division | government | 2 months | Onsite | ₹8000/month | Min rank 30 | 2 seats | Govt certified | New Delhi
+8. "Cybersecurity Research Intern" | Lucideus (Safe Security) | private | 4 months | Hybrid | ₹22000/month | Min rank 40 | 6 seats | Delhi/Bangalore
+
+### Bug Bounty Programs (insert 5)
+1. TechCorp India — Web Application | ₹500–₹2,00,000 | active
+2. Razorpay Security Program | ₹1000–₹5,00,000 | active
+3. Paytm Bug Bounty | ₹500–₹3,00,000 | active
+4. Flipkart Security Research | ₹1000–₹2,50,000 | active
+5. Juspay Payment Security | ₹2000–₹4,00,000 | active
+
+### CTF Challenges (insert 8)
+1. "Find the Hidden Flag" | web | easy | 100 pts | flag: CTF{w3b_b4s1cs_101} | hints: ["Check the page source", "Look for HTML comments"]
+2. "SQL Injection Basics" | web | easy | 150 pts | flag: CTF{sql_1nj3ct10n_m4st3r}
+3. "Base64 Decode Challenge" | crypto | easy | 100 pts | flag: CTF{d3c0d3_th3_s3cr3t}
+4. "Broken Authentication" | web | medium | 200 pts | flag: CTF{4uth_brok3n_f1x_m3}
+5. "Network Packet Analysis" | network | medium | 250 pts | flag: CTF{pcap_4n4lys1s_pr0}
+6. "Reverse Engineering 101" | reverse | hard | 400 pts | flag: CTF{r3v3rs3_3ng1n33r}
+7. "Forensics: Deleted File Recovery" | forensics | hard | 350 pts | flag: CTF{f0r3ns1cs_m4st3r}
+8. "Advanced Web Exploitation" | web | expert | 500 pts | flag: CTF{4dv4nc3d_xpl01t3r}
+
+### Cyber Alerts (insert 10 real alerts)
+1. "Large-Scale UPI Phishing Campaign" | critical | financial | active | affects: Maharashtra, Delhi, Karnataka
+2. "Ransomware Targeting Indian Hospitals" | critical | malware | active | affects: All States
+3. "Fake Income Tax Refund SMS Scam" | high | social_engineering | active | affects: All States
+4. "Data Breach: 2.1 Crore Indian User Records Leaked" | critical | web | active
+5. "Aadhaar-Linked Mobile Number Spoofing Attack" | high | social_engineering | active
+6. "Fake COVID Vaccination Certificate Portal" | high | fraud | active | affects: UP, Bihar, MP
+7. "BSNL Customer Data Exposed on Dark Web" | high | network | active
+8. "OLX Scam Targeting Army Personnel" | medium | social_engineering | active
+9. "Smishing Campaign Impersonating HDFC Bank" | high | financial | active
+10. "New Android Malware Targeting Indian Banking Apps" | critical | malware | active
+
+### Notifications for each seeded user
+Create 3-5 realistic notifications per user based on their activity.
+
+### Wallet transactions for students with earnings
+- Arjun: Multiple credit transactions totaling ₹18,500
+- Priya: Credits totaling ₹12,000
+- Rohit: Credits totaling ₹8,500
+- Sneha: Credits totaling ₹7,200
+- Others: Smaller amounts
+
+### Awards rewards to students based on their verified submissions
+Link rewards to verified submissions with status 'paid'.
+
+---
+
+## BACKEND ROUTES — IMPLEMENT ALL OF THESE
+
+### `POST /api/auth/register`
+- Validate all fields
+- Hash password with bcrypt (12 rounds)
+- Insert user into DB
+- Return JWT token + user object
+- Auto-create welcome notification
+
+### `POST /api/auth/login`
+- Find user by email
+- Compare password
+- Update last_login
+- Return JWT + full user object (no password)
+
+### `GET /api/auth/profile` (protected)
+- Return full profile with badge_count, submission stats
+
+### `PUT /api/auth/profile` (protected)
+- Update name, bio, links, college info
+
+### `GET /api/auth/notifications` (protected)
+- Return last 50 notifications for user ordered by created_at desc
+
+### `PUT /api/auth/notifications/read-all` (protected)
+- Mark all as read
+
+### `POST /api/submissions` (protected, student only)
+- Save submission to DB
+- Run basic plagiarism check (compare title similarity against verified submissions)
+- If plagiarism > 80%: set status to 'fraud', increment fraud_flag_count
+- Emit socket event 'new_submission' to police room
+- Create notification for user
+
+### `GET /api/submissions/mine` (protected)
+- Return user's own submissions with pagination
+
+### `GET /api/submissions` (protected, police/admin)
+- Return all submissions with user info
+- Support filter: status, severity, category, search
+- Pagination
+
+### `GET /api/submissions/:id` (protected)
+- Return single submission with full details
+
+### `PUT /api/submissions/:id/review` (protected, police/admin)
+- Update status, add reviewer notes, award points
+- If verified: add points to user's total_points, recalculate ranks
+- If verified: create reward record
+- Create notification to submitter
+- Emit socket event to user room
+
+### `POST /api/submissions/:id/report-fraud` (protected)
+- Create fraud report submission
+- Notify admin
+
+### `GET /api/leaderboard/national`
+- Return top 100 students by total_points
+- Include name, college, state, points, rank, badges count
+
+### `GET /api/leaderboard/state/:state`
+- Return top 50 from that state
+
+### `GET /api/leaderboard/my-rank` (protected)
+- Return current user's rank, points, percentile
+
+### `GET /api/rewards/mine` (protected)
+- Return user's rewards with submission info and stats
+
+### `POST /api/rewards/withdraw` (protected, student)
+- Create withdrawal transaction
+- Deduct from wallet_balance
+- Create wallet_transaction record
+
+### `GET /api/internships` (protected)
+- Return all internships filtered by org_type, status
+- Check if current user has already applied
+
+### `POST /api/internships/:id/apply` (protected, student)
+- Check eligibility (rank requirement)
+- Create application
+- Send notification to user
+
+### `GET /api/internships/my-applications` (protected, student)
+- Return user's applications with internship details
+
+### `POST /api/internships` (protected, company/admin)
+- Create new internship listing
+
+### `GET /api/police/dashboard-stats` (protected, police/admin)
+- Return: total_submissions, pending_review, critical_alerts, active_cases, flagged_users, verified_today
+
+### `GET /api/police/watchlist` (protected, police/admin)
+- Return users with fraud_flag_count > 0
+
+### `PUT /api/police/users/:id/ban` (protected, police/admin)
+- Toggle ban status
+- Send notification to user
+
+### `POST /api/police/cases` (protected, police/admin)
+- Create case from submission
+- Generate unique case number: CS-{YEAR}-{RANDOM}
+
+### `GET /api/police/cases` (protected, police/admin)
+- Return all cases with submission details
+
+### `PUT /api/police/cases/:id` (protected, police/admin)
+- Update case status, notes, FIR number
+
+### `GET /api/courses` (protected)
+- Return all courses with enrollment status for current user
+
+### `POST /api/courses/:id/enroll` (protected, student)
+- Create enrollment record
+- Increment enrolled_count
+
+### `PUT /api/courses/:id/progress` (protected, student)
+- Update progress_percent
+
+### `GET /api/achievements/mine` (protected)
+- Return user's earned badges + all available badges
+
+### `GET /api/alerts` (protected)
+- Return active cyber alerts ordered by created_at desc
+- Filter by severity
+
+### `GET /api/ctf/challenges` (protected)
+- Return all active CTF challenges with solved status for current user
+
+### `POST /api/ctf/submit` (protected, student)
+- Check flag
+- If correct: award points, create solution record, check for CTF Warrior badge
+
+### `GET /api/companies/bounty-programs` (protected)
+- Return all active bug bounty programs
+
+### `POST /api/rakshbot/chat` (protected)
+- Call Anthropic Claude API (claude-sonnet-4-20250514)
+- System prompt: You are RakshBot, AI assistant for CyberShield India national cybersecurity platform. Help students with ethical hacking, vulnerability research, bug reporting, cybersecurity concepts. Never help with illegal activities. You can speak Hinglish if user does. Be encouraging and patriotic about protecting India's digital infrastructure.
+- Save message history to chat_messages table (last 20 messages)
+- Return AI response
+
+### `POST /api/rakshbot/review-submission` (protected)
+- Call Claude to review submission draft
+- Return quality score and suggestions
+
+### Socket.io Events:
+- `join_user_room` — user joins their personal room for notifications
+- `join_police_room` — police joins monitoring room
+- `new_submission` — emitted to police room when new submission arrives
+- `submission_updated` — emitted to user's room when their submission is reviewed
+- `new_alert` — emitted to all connected users
+
+---
+
+## FRONTEND PAGES — BUILD ALL OF THESE
+
+### Landing Page (`/`)
+Beautiful dark themed landing page with:
+- Hero: "Protect India's Digital Future — Get Rewarded" with animated shield
+- Stats counter: "12,450+ Researchers | ₹2.5 Cr+ Paid | 3,200+ Bugs Fixed | 28 States"
+- How it works: 3 steps with icons
+- Features grid: 6 features with icons
+- Top 5 leaderboard preview (fetched from API)
+- Recent alerts ticker
+- CTA buttons to Register and Login
+- Footer with links
+
+### Login Page (`/login`)
+- Clean dark form
+- Email + password
+- Show/hide password toggle
+- Remember me checkbox
+- Error display
+- Link to register
+- Demo credentials shown: "Demo: student@test.in / Student@123"
+
+### Register Page (`/register`)
+3-step registration:
+- Step 1: Choose role (Student / Police / Cyber Department / Company) with icons and descriptions
+- Step 2: Basic info (name, email, phone, password, confirm password) with validation
+- Step 3: Role-specific details
+  - Student: college name, city, state (dropdown of all Indian states)
+  - Police: station name, station ID, badge number, jurisdiction state+city
+  - Company: company name, website, GST number
+- Progress indicator
+- Form validation on each step
+- Show success and redirect
+
+### Student Dashboard (`/dashboard`)
+Full dashboard with:
+- Greeting with user name and skill level badge
+- Top stats row: Points, National Rank, Verified Findings, Total Earned
+- Quick action buttons: Submit Finding, RakshBot, View CTF
+- Daily missions section (4 missions with XP rewards, checkmarks)
+- Live cyber alerts (last 3, color coded by severity with "View All" button)
+- Recent submissions list with status badges
+- Internship opportunities promo card
+- Leaderboard top 5 preview
+
+### Submit Finding (`/submit`)
+3-step form:
+- Step 1: Type (Vulnerability/Fraud Report/Research/CTF Solution), Severity (color coded cards), Category grid
+- Step 2: Title, Description (rich textarea), Target URL, Steps to Reproduce (numbered), Impact Description, Fix Suggestion
+- "Ask RakshBot to Review" button — calls AI and shows review inline
+- Step 3: File upload area (drag & drop style), submission summary, warning about fraud
+- Submit button with loading state
+- Success screen with submission ID
+
+### My Submissions (`/submissions`)
+- Filter tabs: All, Pending, Verified, Rejected
+- Search bar
+- Submission cards showing: title, category icon, severity badge, status badge, date, points earned
+- Click to expand: show full details, proof files list, reviewer notes
+- Re-submit option for rejected
+- "Report Fraud" button on others' submissions (in community view)
+
+### Leaderboard (`/leaderboard`)
+- Tab switch: National / My State
+- Top 3 with special styling (gold/silver/bronze cards with avatars)
+- Full table: Rank, Avatar, Name, College, State, Points, Verified Bugs, Earnings, Badges
+- Current user highlighted
+- My rank card at bottom if not in top 20
+- State selector for state leaderboard
+
+### Learn (`/learn`)
+- Course grid (2-3 columns)
+- Each course card: thumbnail, title, instructor, level badge, duration, rating stars, enrolled count, price (Free or ₹XXX), Enroll/Continue button
+- Filter by level, category, free/paid
+- Search
+- My courses section at top showing in-progress courses with progress bars
+
+### Achievements (`/achievements`)
+- My badges section: earned badges displayed prominently with glow effects
+- All badges section: grid of all 15 badges (earned = full color, not earned = greyed out with lock)
+- Each badge: icon, name, description, rarity indicator
+- Badge progress: "3/5 bugs to earn Eagle Eye"
+- Total XP and skill score display
+
+### Wallet (`/wallet`)
+- Balance card: current wallet balance in big text
+- Total earned, Total withdrawn
+- Quick withdraw button with UPI ID input
+- Transaction history table: date, description, type (credit/debit), amount, balance
+- Pending rewards section
+- Withdrawal history
+
+### Internships (`/internships`)
+- Filter: Government / Private / All, Remote/Onsite/Hybrid
+- Internship cards: org logo/emoji, org name, title, duration, stipend, location, seats left, deadline, eligibility badge (Eligible/Not Eligible based on rank)
+- Govt certified badge on government internships
+- Apply button → confirmation modal with cover letter textarea
+- My Applications tab: show applied internships with status badge
+
+### Profile (`/profile`)
+- Avatar with upload (or initial-based avatar)
+- Name, bio, college, state, skill level
+- Edit form
+- GitHub and LinkedIn links
+- Stats: Total Points, National Rank, Verified Findings, Badges Earned, Total Earned
+- Badge showcase (top 5)
+- Shareable profile link
+- Recent activity log
+
+### RakshBot (`/rakshbot`)
+Full chat interface:
+- Dark themed chat bubbles
+- User messages: right aligned, blue
+- Bot messages: left aligned, dark with robot icon
+- Quick prompt suggestions on first load: "How to find XSS?", "Write a bug report", "Explain OWASP Top 10", "How to start bug bounty?", "What is SQL injection?"
+- Typing indicator when AI is responding
+- Auto-scroll to bottom
+- Clear chat button
+- Message timestamps
+- "Review My Draft" button that opens a modal to paste submission draft and get AI review
+
+### Police Dashboard (`/police`)
+Full monitoring interface:
+- Header: LIVE badge (pulsing red dot), Station name, Officer name
+- Quick nav: Monitor, Cases, Watchlist, Alerts
+- Stats: Total Submissions, Pending Review, Critical Alerts, Active Cases, Flagged Users, Verified Today
+- Live feed: real-time submissions as they come in (Socket.io)
+- Each submission row: severity badge (color), category, title, user name + college, fraud flags if any, time, Review button
+- Filter by: status, severity, category
+- Search by title or user
+
+### Police Monitoring (`/police/monitoring`)
+- Full table of all submissions
+- Columns: Date, User, College, State, Title, Type, Severity, Category, AI Score, Status, Actions
+- Click review → opens ReviewSubmission modal
+- Bulk actions: Verify Selected, Reject Selected
+- Export CSV button
+
+### Review Submission Modal
+- Full submission details: title, description, steps, impact, fix, target URL
+- Proof files list (downloadable)
+- User info with fraud flag count
+- AI plagiarism score shown as progress bar
+- Status dropdown: Verified / Rejected / Fraud / Under Review / Escalated
+- Points to award input (auto-suggest based on severity: critical=500, high=300, medium=150, low=75)
+- Reviewer notes textarea
+- Department assignment dropdown
+- Submit Review button
+
+### Police Cases (`/police/cases`)
+- Case list: case number, submission title, status badge, priority, assigned officer, created date
+- Create Case from submission button
+- Update case: status, notes, FIR number
+- Filter by status
+
+### Watchlist (`/police/watchlist`)
+- Table: Name, Email, College, State, Fraud Flags, Account Status (Active/Banned)
+- Ban/Unban button with confirmation
+- View submissions button (filter to that user's submissions)
+- Export list button
+
+### Company Dashboard (`/company`)
+- Stats: Active Programs, Total Reports, Valid Reports, Total Paid
+- Bug bounty programs list
+- Internship postings list
+
+### Bug Bounty Programs (`/company/bounties`)
+- List of company's programs
+- Create new program form: title, description, scope, out of scope, reward range
+- View reports for each program
+
+---
+
+## UI / DESIGN REQUIREMENTS
+
+**Color Scheme:**
+- Background: #0a0f1e (deep navy)
+- Secondary bg: #0d1b2a
+- Card bg: rgba(255,255,255,0.05)
+- Border: rgba(255,255,255,0.08)
+- Primary: #2563eb (blue)
+- Success: #10b981 (green)
+- Warning: #f59e0b (amber)
+- Danger: #ef4444 (red)
+- Police accent: #ef4444 (red theme for police pages)
+- Text primary: #ffffff
+- Text secondary: #94a3b8
+- Text muted: #64748b
+
+**Styling Rules:**
+- TailwindCSS only, no other CSS frameworks
+- All pages dark themed
+- Cards: backdrop blur, subtle border, slight transparency
+- Buttons: gradient backgrounds, hover effects
+- Forms: dark input fields with focus glow
+- Badges/pills: colored backgrounds with matching text
+- Animations: fade-in on page load, hover transitions
+- Status badges: colored dots + text
+- Severity badges: colored backgrounds (critical=red, high=orange, medium=yellow, low=green)
+- Loading states: spinner or skeleton on all data fetching
+- Empty states: icon + message + action button
+- Mobile responsive: works on phone screens too
+
+**Layout:**
+- Student pages: sidebar navigation (desktop) / bottom nav (mobile)
+- Police pages: sidebar with red accent
+- Company pages: sidebar with purple accent
+- All layouts: top header with user avatar, name, notifications bell with unread count
+
+---
+
+## AUTHENTICATION & AUTHORIZATION
+
+- JWT tokens stored in localStorage
+- Token sent as `Authorization: Bearer {token}` header
+- Protected routes redirect to /login if no token
+- Role-based routing: students → /dashboard, police → /police, company → /company
+- On login check user.is_banned → show ban message if true
+- Auto-logout on 401 response from API
+
+---
+
+## REAL-TIME FEATURES (Socket.io)
+
+**Client connects on login:**
+- Join personal room: `user_{userId}`
+- If police: join `police_monitoring` room
+
+**Events to handle:**
+- `new_submission` → Show toast notification to police: "New {severity} submission from {name}"
+- `submission_updated` → Show toast to student: "Your submission has been {status}"
+- `new_alert` → Show toast to all users
+
+---
+
+## ENVIRONMENT VARIABLES (`.env` in root)
+
+```
+ANTHROPIC_API_KEY=your_key_here
+JWT_SECRET=cybershield_india_jwt_secret_2024_min32chars
+PORT=3000
+NODE_ENV=development
+```
+
+---
+
+## ROOT `package.json` — RUN BOTH SERVERS
+
+```json
+{
+  "name": "cybershield-india",
+  "scripts": {
+    "install-all": "npm install && cd client && npm install && cd ../server && npm install",
+    "dev": "concurrently \"cd server && npm run dev\" \"cd client && npm run dev\"",
+    "build": "cd client && npm run build",
+    "start": "cd server && npm start"
+  },
+  "dependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
+```
+
+## `server/package.json`
+```json
+{
+  "name": "cybershield-backend",
+  "scripts": {
+    "dev": "nodemon --exec ts-node src/server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "cors": "^2.8.5",
+    "helmet": "^7.1.0",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.2",
+    "better-sqlite3": "^9.6.0",
+    "socket.io": "^4.7.5",
+    "multer": "^1.4.5-lts.1",
+    "dotenv": "^16.4.5",
+    "uuid": "^9.0.1"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.5",
+    "@types/node": "^20.12.0",
+    "@types/express": "^4.17.21",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/jsonwebtoken": "^9.0.6",
+    "@types/better-sqlite3": "^7.6.10",
+    "@types/multer": "^1.4.11",
+    "@types/cors": "^2.8.17",
+    "@types/uuid": "^9.0.8",
+    "ts-node": "^10.9.2",
+    "nodemon": "^3.1.0"
+  }
+}
+```
+
+## `client/package.json`
+```json
+{
+  "name": "cybershield-frontend",
+  "scripts": {
+    "dev": "vite --port 5173",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.23.1",
+    "axios": "^1.7.2",
+    "zustand": "^4.5.2",
+    "socket.io-client": "^4.7.5",
+    "lucide-react": "^0.383.0",
+    "recharts": "^2.12.7",
+    "react-hot-toast": "^2.4.1",
+    "date-fns": "^3.6.0",
+    "clsx": "^2.1.1"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.1",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.2.1",
+    "typescript": "^5.4.5",
+    "tailwindcss": "^3.4.4",
+    "autoprefixer": "^10.4.19",
+    "postcss": "^8.4.38",
+    "vite": "^5.2.12"
+  }
+}
+```
+
+---
+
+## VITE CONFIG (`client/vite.config.ts`)
+```ts
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+
+export default defineConfig({
+  plugins: [react()],
+  server: {
+    proxy: {
+      '/api': 'http://localhost:3000',
+      '/socket.io': {
+        target: 'http://localhost:3000',
+        ws: true
+      }
+    }
+  }
+})
+```
+
+---
+
+## CRITICAL REQUIREMENTS
+
+1. **EVERYTHING MUST WORK** — No placeholder data, no "TODO" comments, no empty functions
+2. **SEED DATA IS REAL** — All seed data must be inserted when app first runs. Use a `seeded` check file or table to avoid re-seeding
+3. **AUTH WORKS COMPLETELY** — Register, login, JWT, protected routes, role-based redirects
+4. **POLICE CAN SEE SUBMISSIONS** — Login as police@cybershield.in / Police@123 and see all student submissions in real-time
+5. **STUDENTS CAN SUBMIT AND EARN** — Login as arjun@student.in / Student@123 and see existing submissions, points, wallet balance
+6. **RAKSHBOT WORKS** — If ANTHROPIC_API_KEY is set it calls real API, if not show a fallback response
+7. **LEADERBOARD IS REAL** — Shows actual seeded students with real rankings
+8. **INTERNSHIPS SHOW ELIGIBILITY** — Based on user's national_rank vs required_min_rank
+9. **NOTIFICATIONS WORK** — Bell icon shows unread count, clicking shows notification panel
+10. **WALLET SHOWS REAL BALANCE** — Students have actual balance from their verified submissions
+11. **FORMS VALIDATE** — All forms have proper validation with error messages
+12. **LOADING STATES** — Every API call shows loading spinner
+13. **ERROR HANDLING** — Every API call shows toast on error
+14. **RESPONSIVE** — Works on mobile and desktop
+15. **START COMMAND** — Running `npm run dev` from root starts both frontend and backend
+
+---
+
+## DEFAULT LOGIN CREDENTIALS (show these on Login page)
+
+| Role | Email | Password |
+|------|-------|----------|
+| Student (Top Ranked) | arjun@student.in | Student@123 |
+| Police Officer | police@cybershield.in | Police@123 |
+| Company | company@cybershield.in | Company@123 |
+| Admin | admin@cybershield.in | Admin@123 |
+
+---
+
+Build the complete application now. Start with:
+1. Root package.json and .env
+2. Backend: server.ts, database init and seed, all routes
+3. Frontend: main.tsx, auth store, all pages
+4. Make sure `npm run dev` from root starts everything
+
+The app should be fully functional immediately after setup with all seed data visible.

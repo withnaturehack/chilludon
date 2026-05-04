@@ -1,22 +1,49 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: CyberShield India API specification
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: auth
+    description: Authentication operations
+  - name: submissions
+    description: Vulnerability submission operations
+  - name: leaderboard
+    description: Leaderboard operations
+  - name: wallet
+    description: Wallet and rewards operations
+  - name: courses
+    description: Learning courses operations
+  - name: ctf
+    description: CTF challenges operations
+  - name: internships
+    description: Internship operations
+  - name: badges
+    description: Achievement and badge operations
+  - name: alerts
+    description: Cyber alerts operations
+  - name: police
+    description: Police dashboard operations
+  - name: companies
+    description: Company and bug bounty operations
+  - name: rakshbot
+    description: RakshBot AI mentor operations
+  - name: profile
+    description: User profile operations
+  - name: notifications
+    description: Notifications operations
+
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,13 +51,1606 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  # Auth
+  /auth/register:
+    post:
+      operationId: register
+      tags: [auth]
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterInput"
+      responses:
+        "201":
+          description: User registered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/login:
+    post:
+      operationId: login
+      tags: [auth]
+      summary: Login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginInput"
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/me:
+    get:
+      operationId: getMe
+      tags: [auth]
+      summary: Get current user
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  # Profile
+  /profile:
+    get:
+      operationId: getProfile
+      tags: [profile]
+      summary: Get user profile
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: User profile with stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+    patch:
+      operationId: updateProfile
+      tags: [profile]
+      summary: Update user profile
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateProfileInput"
+      responses:
+        "200":
+          description: Updated profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  # Submissions
+  /submissions:
+    get:
+      operationId: getSubmissions
+      tags: [submissions]
+      summary: Get user's submissions
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        "200":
+          description: Submissions list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SubmissionsResponse"
+    post:
+      operationId: createSubmission
+      tags: [submissions]
+      summary: Create a new submission
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSubmissionInput"
+      responses:
+        "201":
+          description: Submission created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Submission"
+
+  /submissions/{id}:
+    get:
+      operationId: getSubmission
+      tags: [submissions]
+      summary: Get submission details
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Submission details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Submission"
+
+  # Leaderboard
+  /leaderboard:
+    get:
+      operationId: getLeaderboard
+      tags: [leaderboard]
+      summary: Get national leaderboard
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: state
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Leaderboard
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LeaderboardResponse"
+
+  # Wallet
+  /wallet:
+    get:
+      operationId: getWallet
+      tags: [wallet]
+      summary: Get wallet balance and transactions
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Wallet data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WalletResponse"
+
+  /wallet/withdraw:
+    post:
+      operationId: withdrawFunds
+      tags: [wallet]
+      summary: Request withdrawal
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WithdrawInput"
+      responses:
+        "200":
+          description: Withdrawal requested
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WalletTransaction"
+
+  # Courses
+  /courses:
+    get:
+      operationId: getCourses
+      tags: [courses]
+      summary: Get all courses
+      parameters:
+        - name: level
+          in: query
+          schema:
+            type: string
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: is_free
+          in: query
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: Courses list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CoursesResponse"
+
+  /courses/{id}/enroll:
+    post:
+      operationId: enrollCourse
+      tags: [courses]
+      summary: Enroll in a course
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Enrolled successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CourseEnrollment"
+
+  /courses/my-courses:
+    get:
+      operationId: getMyCourses
+      tags: [courses]
+      summary: Get user's enrolled courses
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: My courses
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MyCoursesResponse"
+
+  # CTF
+  /ctf:
+    get:
+      operationId: getCtfChallenges
+      tags: [ctf]
+      summary: Get CTF challenges
+      parameters:
+        - name: difficulty
+          in: query
+          schema:
+            type: string
+        - name: category
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: CTF challenges
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CtfChallengesResponse"
+
+  /ctf/{id}/submit:
+    post:
+      operationId: submitCtfFlag
+      tags: [ctf]
+      summary: Submit CTF flag
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CtfSubmitInput"
+      responses:
+        "200":
+          description: CTF submission result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CtfSubmitResult"
+
+  # Internships
+  /internships:
+    get:
+      operationId: getInternships
+      tags: [internships]
+      summary: Get available internships
+      parameters:
+        - name: org_type
+          in: query
+          schema:
+            type: string
+        - name: location_type
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Internships list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InternshipsResponse"
+
+  /internships/{id}/apply:
+    post:
+      operationId: applyInternship
+      tags: [internships]
+      summary: Apply for an internship
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InternshipApplyInput"
+      responses:
+        "200":
+          description: Application submitted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InternshipApplication"
+
+  /internships/my-applications:
+    get:
+      operationId: getMyApplications
+      tags: [internships]
+      summary: Get user's internship applications
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: My applications
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MyApplicationsResponse"
+
+  # Badges
+  /badges:
+    get:
+      operationId: getAllBadges
+      tags: [badges]
+      summary: Get all badges
+      responses:
+        "200":
+          description: All badges
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BadgesResponse"
+
+  /badges/my-badges:
+    get:
+      operationId: getMyBadges
+      tags: [badges]
+      summary: Get user's earned badges
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: User badges
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserBadgesResponse"
+
+  # Alerts
+  /alerts:
+    get:
+      operationId: getAlerts
+      tags: [alerts]
+      summary: Get cyber alerts
+      parameters:
+        - name: severity
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: Cyber alerts
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AlertsResponse"
+
+  # Police
+  /police/submissions:
+    get:
+      operationId: getPoliceSubmissions
+      tags: [police]
+      summary: Get all submissions for review
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: severity
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Submissions for review
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SubmissionsResponse"
+
+  /police/submissions/{id}/review:
+    patch:
+      operationId: reviewSubmission
+      tags: [police]
+      summary: Review a submission
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReviewSubmissionInput"
+      responses:
+        "200":
+          description: Submission reviewed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Submission"
+
+  /police/cases:
+    get:
+      operationId: getPoliceCases
+      tags: [police]
+      summary: Get police cases
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Police cases
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PoliceCasesResponse"
+
+  /police/stats:
+    get:
+      operationId: getPoliceStats
+      tags: [police]
+      summary: Get police dashboard stats
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Police stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PoliceStats"
+
+  # Companies
+  /companies/bounty-programs:
+    get:
+      operationId: getBountyPrograms
+      tags: [companies]
+      summary: Get bug bounty programs
+      responses:
+        "200":
+          description: Bug bounty programs
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BountyProgramsResponse"
+
+  /companies/post-internship:
+    post:
+      operationId: postInternship
+      tags: [companies]
+      summary: Post a new internship
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PostInternshipInput"
+      responses:
+        "201":
+          description: Internship posted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Internship"
+
+  /companies/stats:
+    get:
+      operationId: getCompanyStats
+      tags: [companies]
+      summary: Get company dashboard stats
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Company stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CompanyStats"
+
+  # RakshBot
+  /rakshbot/chat:
+    post:
+      operationId: chatWithRakshBot
+      tags: [rakshbot]
+      summary: Chat with RakshBot AI mentor
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RakshBotChatInput"
+      responses:
+        "200":
+          description: AI response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RakshBotResponse"
+
+  /rakshbot/history:
+    get:
+      operationId: getRakshBotHistory
+      tags: [rakshbot]
+      summary: Get chat history
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 30
+      responses:
+        "200":
+          description: Chat history
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RakshBotHistoryResponse"
+
+  # Notifications
+  /notifications:
+    get:
+      operationId: getNotifications
+      tags: [notifications]
+      summary: Get user notifications
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Notifications
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationsResponse"
+
+  /notifications/{id}/read:
+    patch:
+      operationId: markNotificationRead
+      tags: [notifications]
+      summary: Mark notification as read
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Notification marked as read
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Notification"
+
+  # Dashboard stats
+  /dashboard/stats:
+    get:
+      operationId: getDashboardStats
+      tags: [profile]
+      summary: Get dashboard statistics
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Dashboard stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardStats"
+
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
   schemas:
     HealthStatus:
       type: object
       properties:
         status:
           type: string
-      required:
-        - status
+      required: [status]
 
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+      required: [error]
+
+    RegisterInput:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        password:
+          type: string
+        role:
+          type: string
+          enum: [student, police, company]
+        college_name:
+          type: string
+        college_city:
+          type: string
+        state:
+          type: string
+        station_name:
+          type: string
+        badge_number:
+          type: string
+        company_name:
+          type: string
+      required: [name, email, password, role]
+
+    LoginInput:
+      type: object
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+      required: [email, password]
+
+    AuthResponse:
+      type: object
+      properties:
+        token:
+          type: string
+        user:
+          $ref: "#/components/schemas/User"
+      required: [token, user]
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+        skill_level:
+          type: string
+        skill_score:
+          type: integer
+        total_points:
+          type: integer
+        national_rank:
+          type: integer
+          nullable: true
+        state_rank:
+          type: integer
+          nullable: true
+        wallet_balance:
+          type: number
+        total_earned:
+          type: number
+        is_verified:
+          type: integer
+        college_name:
+          type: string
+          nullable: true
+        college_city:
+          type: string
+          nullable: true
+        state:
+          type: string
+          nullable: true
+        avatar_url:
+          type: string
+          nullable: true
+        bio:
+          type: string
+          nullable: true
+        github_url:
+          type: string
+          nullable: true
+        linkedin_url:
+          type: string
+          nullable: true
+        station_name:
+          type: string
+          nullable: true
+        badge_number:
+          type: string
+          nullable: true
+        company_name:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+      required: [id, name, email, role]
+
+    UserProfile:
+      type: object
+      properties:
+        user:
+          $ref: "#/components/schemas/User"
+        submission_count:
+          type: integer
+        verified_count:
+          type: integer
+        badge_count:
+          type: integer
+        recent_badges:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserBadge"
+        recent_submissions:
+          type: array
+          items:
+            $ref: "#/components/schemas/Submission"
+      required: [user, submission_count, verified_count, badge_count]
+
+    UpdateProfileInput:
+      type: object
+      properties:
+        name:
+          type: string
+        bio:
+          type: string
+        github_url:
+          type: string
+        linkedin_url:
+          type: string
+        state:
+          type: string
+        college_name:
+          type: string
+
+    DashboardStats:
+      type: object
+      properties:
+        total_points:
+          type: integer
+        national_rank:
+          type: integer
+          nullable: true
+        verified_submissions:
+          type: integer
+        total_submissions:
+          type: integer
+        wallet_balance:
+          type: number
+        badge_count:
+          type: integer
+        skill_level:
+          type: string
+        recent_alerts:
+          type: array
+          items:
+            $ref: "#/components/schemas/CyberAlert"
+        recent_submissions:
+          type: array
+          items:
+            $ref: "#/components/schemas/Submission"
+      required: [total_points, verified_submissions, total_submissions, wallet_balance, badge_count, skill_level]
+
+    Submission:
+      type: object
+      properties:
+        id:
+          type: string
+        user_id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        type:
+          type: string
+        severity:
+          type: string
+          nullable: true
+        category:
+          type: string
+          nullable: true
+        status:
+          type: string
+        points_awarded:
+          type: integer
+        ai_analysis:
+          type: string
+          nullable: true
+        reviewer_notes:
+          type: string
+          nullable: true
+        target_url:
+          type: string
+          nullable: true
+        steps_to_reproduce:
+          type: string
+          nullable: true
+        impact_description:
+          type: string
+          nullable: true
+        fix_suggestion:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+        updated_at:
+          type: string
+        user_name:
+          type: string
+          nullable: true
+      required: [id, user_id, title, description, type, status, points_awarded, created_at, updated_at]
+
+    SubmissionsResponse:
+      type: object
+      properties:
+        submissions:
+          type: array
+          items:
+            $ref: "#/components/schemas/Submission"
+        total:
+          type: integer
+      required: [submissions, total]
+
+    CreateSubmissionInput:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        type:
+          type: string
+          enum: [vulnerability, fraud_report, research, ctf_solution]
+        severity:
+          type: string
+          enum: [critical, high, medium, low, info]
+        category:
+          type: string
+          enum: [web, network, mobile, social_engineering, financial, hardware, malware, osint, other]
+        steps_to_reproduce:
+          type: string
+        impact_description:
+          type: string
+        fix_suggestion:
+          type: string
+        target_url:
+          type: string
+        affected_system:
+          type: string
+      required: [title, description, type]
+
+    LeaderboardEntry:
+      type: object
+      properties:
+        rank:
+          type: integer
+        user_id:
+          type: string
+        name:
+          type: string
+        college_name:
+          type: string
+          nullable: true
+        state:
+          type: string
+          nullable: true
+        total_points:
+          type: integer
+        skill_level:
+          type: string
+        verified_submissions:
+          type: integer
+        badge_count:
+          type: integer
+        avatar_url:
+          type: string
+          nullable: true
+      required: [rank, user_id, name, total_points, skill_level, verified_submissions, badge_count]
+
+    LeaderboardResponse:
+      type: object
+      properties:
+        leaderboard:
+          type: array
+          items:
+            $ref: "#/components/schemas/LeaderboardEntry"
+        my_rank:
+          type: integer
+          nullable: true
+        total_users:
+          type: integer
+      required: [leaderboard, total_users]
+
+    WalletTransaction:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+        amount:
+          type: number
+        balance_after:
+          type: number
+          nullable: true
+        description:
+          type: string
+          nullable: true
+        status:
+          type: string
+        created_at:
+          type: string
+      required: [id, type, amount, status, created_at]
+
+    WalletResponse:
+      type: object
+      properties:
+        balance:
+          type: number
+        total_earned:
+          type: number
+        transactions:
+          type: array
+          items:
+            $ref: "#/components/schemas/WalletTransaction"
+      required: [balance, total_earned, transactions]
+
+    WithdrawInput:
+      type: object
+      properties:
+        amount:
+          type: number
+        upi_id:
+          type: string
+      required: [amount, upi_id]
+
+    Course:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        instructor_name:
+          type: string
+          nullable: true
+        instructor_org:
+          type: string
+          nullable: true
+        level:
+          type: string
+          nullable: true
+        category:
+          type: string
+          nullable: true
+        language:
+          type: string
+          nullable: true
+        duration_hours:
+          type: number
+          nullable: true
+        total_lessons:
+          type: integer
+        is_free:
+          type: integer
+        price:
+          type: number
+        is_certified:
+          type: integer
+        enrolled_count:
+          type: integer
+        rating:
+          type: number
+        created_at:
+          type: string
+      required: [id, title, is_free, price, is_certified, enrolled_count, rating, created_at]
+
+    CourseEnrollment:
+      type: object
+      properties:
+        id:
+          type: string
+        course_id:
+          type: string
+        progress_percent:
+          type: integer
+        started_at:
+          type: string
+        completed_at:
+          type: string
+          nullable: true
+      required: [id, course_id, progress_percent, started_at]
+
+    CoursesResponse:
+      type: object
+      properties:
+        courses:
+          type: array
+          items:
+            $ref: "#/components/schemas/Course"
+        total:
+          type: integer
+      required: [courses, total]
+
+    MyCourse:
+      type: object
+      properties:
+        course:
+          $ref: "#/components/schemas/Course"
+        enrollment:
+          $ref: "#/components/schemas/CourseEnrollment"
+      required: [course, enrollment]
+
+    MyCoursesResponse:
+      type: object
+      properties:
+        courses:
+          type: array
+          items:
+            $ref: "#/components/schemas/MyCourse"
+      required: [courses]
+
+    CtfChallenge:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        category:
+          type: string
+          nullable: true
+        difficulty:
+          type: string
+        points:
+          type: integer
+        hints:
+          type: string
+        solve_count:
+          type: integer
+        is_solved:
+          type: integer
+          nullable: true
+        created_at:
+          type: string
+      required: [id, title, difficulty, points, hints, solve_count, created_at]
+
+    CtfChallengesResponse:
+      type: object
+      properties:
+        challenges:
+          type: array
+          items:
+            $ref: "#/components/schemas/CtfChallenge"
+        total:
+          type: integer
+      required: [challenges, total]
+
+    CtfSubmitInput:
+      type: object
+      properties:
+        flag:
+          type: string
+      required: [flag]
+
+    CtfSubmitResult:
+      type: object
+      properties:
+        correct:
+          type: boolean
+        points_earned:
+          type: integer
+        message:
+          type: string
+      required: [correct, points_earned, message]
+
+    Internship:
+      type: object
+      properties:
+        id:
+          type: string
+        org_name:
+          type: string
+        org_type:
+          type: string
+          nullable: true
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        requirements:
+          type: string
+          nullable: true
+        duration_months:
+          type: integer
+          nullable: true
+        location_type:
+          type: string
+          nullable: true
+        location_city:
+          type: string
+          nullable: true
+        location_state:
+          type: string
+          nullable: true
+        stipend_amount:
+          type: number
+          nullable: true
+        required_min_rank:
+          type: integer
+          nullable: true
+        total_seats:
+          type: integer
+        filled_seats:
+          type: integer
+        status:
+          type: string
+        is_govt_certified:
+          type: integer
+        created_at:
+          type: string
+      required: [id, org_name, title, total_seats, filled_seats, status, is_govt_certified, created_at]
+
+    InternshipsResponse:
+      type: object
+      properties:
+        internships:
+          type: array
+          items:
+            $ref: "#/components/schemas/Internship"
+        total:
+          type: integer
+      required: [internships, total]
+
+    InternshipApplyInput:
+      type: object
+      properties:
+        cover_letter:
+          type: string
+      required: [cover_letter]
+
+    InternshipApplication:
+      type: object
+      properties:
+        id:
+          type: string
+        internship_id:
+          type: string
+        status:
+          type: string
+        applied_at:
+          type: string
+      required: [id, internship_id, status, applied_at]
+
+    MyApplicationsResponse:
+      type: object
+      properties:
+        applications:
+          type: array
+          items:
+            type: object
+            properties:
+              application:
+                $ref: "#/components/schemas/InternshipApplication"
+              internship:
+                $ref: "#/components/schemas/Internship"
+            required: [application, internship]
+      required: [applications]
+
+    Badge:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        emoji:
+          type: string
+          nullable: true
+        category:
+          type: string
+          nullable: true
+        points_required:
+          type: integer
+        is_rare:
+          type: integer
+        color:
+          type: string
+          nullable: true
+      required: [id, name, points_required, is_rare]
+
+    UserBadge:
+      type: object
+      properties:
+        badge:
+          $ref: "#/components/schemas/Badge"
+        earned_at:
+          type: string
+      required: [badge, earned_at]
+
+    BadgesResponse:
+      type: object
+      properties:
+        badges:
+          type: array
+          items:
+            $ref: "#/components/schemas/Badge"
+      required: [badges]
+
+    UserBadgesResponse:
+      type: object
+      properties:
+        badges:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserBadge"
+        total_earned:
+          type: integer
+      required: [badges, total_earned]
+
+    CyberAlert:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        severity:
+          type: string
+        category:
+          type: string
+          nullable: true
+        affected_states:
+          type: string
+        source:
+          type: string
+          nullable: true
+        is_active:
+          type: integer
+        created_at:
+          type: string
+      required: [id, title, severity, affected_states, is_active, created_at]
+
+    AlertsResponse:
+      type: object
+      properties:
+        alerts:
+          type: array
+          items:
+            $ref: "#/components/schemas/CyberAlert"
+        total:
+          type: integer
+      required: [alerts, total]
+
+    ReviewSubmissionInput:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [verified, rejected, fraud, escalated, under_review]
+        reviewer_notes:
+          type: string
+        points_awarded:
+          type: integer
+      required: [status]
+
+    PoliceCase:
+      type: object
+      properties:
+        id:
+          type: string
+        submission_id:
+          type: string
+        case_number:
+          type: string
+          nullable: true
+        status:
+          type: string
+        priority:
+          type: string
+        fir_number:
+          type: string
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+        submission:
+          $ref: "#/components/schemas/Submission"
+      required: [id, submission_id, status, priority, created_at, submission]
+
+    PoliceCasesResponse:
+      type: object
+      properties:
+        cases:
+          type: array
+          items:
+            $ref: "#/components/schemas/PoliceCase"
+        total:
+          type: integer
+      required: [cases, total]
+
+    PoliceStats:
+      type: object
+      properties:
+        pending_review:
+          type: integer
+        verified_today:
+          type: integer
+        open_cases:
+          type: integer
+        critical_submissions:
+          type: integer
+        total_submissions:
+          type: integer
+        fraud_flagged:
+          type: integer
+      required: [pending_review, verified_today, open_cases, critical_submissions, total_submissions, fraud_flagged]
+
+    BountyProgram:
+      type: object
+      properties:
+        id:
+          type: string
+        company_name:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        scope:
+          type: string
+          nullable: true
+        min_reward:
+          type: number
+          nullable: true
+        max_reward:
+          type: number
+          nullable: true
+        status:
+          type: string
+        total_paid:
+          type: number
+        total_reports:
+          type: integer
+        created_at:
+          type: string
+      required: [id, company_name, title, status, total_paid, total_reports, created_at]
+
+    BountyProgramsResponse:
+      type: object
+      properties:
+        programs:
+          type: array
+          items:
+            $ref: "#/components/schemas/BountyProgram"
+        total:
+          type: integer
+      required: [programs, total]
+
+    PostInternshipInput:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        requirements:
+          type: string
+        duration_months:
+          type: integer
+        location_type:
+          type: string
+          enum: [remote, onsite, hybrid]
+        location_city:
+          type: string
+        stipend_amount:
+          type: number
+        total_seats:
+          type: integer
+        application_deadline:
+          type: string
+      required: [title, description, location_type, total_seats]
+
+    CompanyStats:
+      type: object
+      properties:
+        active_programs:
+          type: integer
+        total_reports_received:
+          type: integer
+        total_paid:
+          type: number
+        open_internships:
+          type: integer
+      required: [active_programs, total_reports_received, total_paid, open_internships]
+
+    RakshBotChatInput:
+      type: object
+      properties:
+        message:
+          type: string
+      required: [message]
+
+    RakshBotResponse:
+      type: object
+      properties:
+        response:
+          type: string
+        message_id:
+          type: string
+      required: [response, message_id]
+
+    RakshBotHistoryResponse:
+      type: object
+      properties:
+        messages:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              role:
+                type: string
+              content:
+                type: string
+              created_at:
+                type: string
+            required: [id, role, content, created_at]
+      required: [messages]
+
+    Notification:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        message:
+          type: string
+          nullable: true
+        type:
+          type: string
+          nullable: true
+        is_read:
+          type: integer
+        created_at:
+          type: string
+      required: [id, title, is_read, created_at]
+
+    NotificationsResponse:
+      type: object
+      properties:
+        notifications:
+          type: array
+          items:
+            $ref: "#/components/schemas/Notification"
+        unread_count:
+          type: integer
+      required: [notifications, unread_count]
