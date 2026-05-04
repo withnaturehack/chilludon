@@ -1,0 +1,12 @@
+{
+  "expo": {
+    "extra": {
+      "eas": {
+        "projectId": "a737bfbe-1d13-4bf2-b32b-e1f920a0aa50"
+      }
+    },
+    "android": {
+      "package": "com.suvidha.hub.workspace"
+    }
+  }
+}
