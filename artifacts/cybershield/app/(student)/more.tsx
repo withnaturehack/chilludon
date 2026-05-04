@@ -1,8 +1,8 @@
 import React, { useRef, useEffect } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Platform, Alert, Animated } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Platform, Alert, Animated, Image } from "react-native";
 import { router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useColors } from "@/hooks/useColors";
 import { useAuth } from "@/context/AuthContext";
@@ -11,29 +11,29 @@ const MENU_GROUPS = [
   {
     label: "Activity",
     items: [
-      { icon: "file-text", label: "My Reports", sub: "View all submissions", path: "/(student)/submissions", color: "#3B82F6", grad: ["#1D4ED8", "#3B82F6"] },
+      { icon: "file-document-outline", label: "My Reports", sub: "View all submissions", path: "/(student)/submissions", color: "#3B82F6", grad: ["#1D4ED8", "#3B82F6"] },
       { icon: "trending-up", label: "Leaderboard", sub: "National rankings", path: "/(student)/leaderboard", color: "#F59E0B", grad: ["#D97706", "#F59E0B"] },
     ],
   },
   {
     label: "Learn & Grow",
     items: [
-      { icon: "book-open", label: "Cyber Academy", sub: "CERT-In certified courses", path: "/(student)/learn", color: "#8B5CF6", grad: ["#7C3AED", "#8B5CF6"] },
-      { icon: "award", label: "Achievements", sub: "Badges & rewards", path: "/(student)/achievements", color: "#F59E0B", grad: ["#D97706", "#F59E0B"] },
+      { icon: "book-open-variant", label: "Cyber Academy", sub: "CERT-In certified courses", path: "/(student)/learn", color: "#8B5CF6", grad: ["#7C3AED", "#8B5CF6"] },
+      { icon: "medal-outline", label: "Achievements", sub: "Badges & rewards", path: "/(student)/achievements", color: "#F59E0B", grad: ["#D97706", "#F59E0B"] },
       { icon: "briefcase", label: "Internships", sub: "Cyber career opportunities", path: "/(student)/internships", color: "#06B6D4", grad: ["#0891B2", "#06B6D4"] },
     ],
   },
   {
     label: "Finance",
     items: [
-      { icon: "dollar-sign", label: "Wallet", sub: "Balance & transactions", path: "/(student)/wallet", color: "#10B981", grad: ["#059669", "#10B981"] },
+      { icon: "currency-usd", label: "Wallet", sub: "Balance & transactions", path: "/(student)/wallet", color: "#10B981", grad: ["#059669", "#10B981"] },
     ],
   },
   {
     label: "Security",
     items: [
-      { icon: "bell", label: "Threat Alerts", sub: "Real-time cyber intelligence", path: "/(student)/alerts", color: "#EF4444", grad: ["#DC2626", "#EF4444"] },
-      { icon: "user", label: "My Profile", sub: "Public profile & settings", path: "/(student)/profile", color: "#3B82F6", grad: ["#1D4ED8", "#3B82F6"] },
+      { icon: "bell-alert-outline", label: "Threat Alerts", sub: "Real-time cyber intelligence", path: "/(student)/alerts", color: "#EF4444", grad: ["#DC2626", "#EF4444"] },
+      { icon: "account-circle-outline", label: "My Profile", sub: "Public profile & settings", path: "/(student)/profile", color: "#3B82F6", grad: ["#1D4ED8", "#3B82F6"] },
     ],
   },
 ];
@@ -60,10 +60,7 @@ export default function MoreScreen() {
       {
         text: "Logout",
         style: "destructive",
-        onPress: () => {
-          logout();
-          router.replace("/auth/login");
-        },
+        onPress: () => { logout(); router.replace("/auth/login"); },
       },
     ]);
   }
@@ -96,14 +93,14 @@ export default function MoreScreen() {
                   <View style={styles.userStatItem}>
                     <MaterialCommunityIcons name="star" size={12} color="#F59E0B" />
                     <Text style={styles.userStatText}>
-                      {user?.skill_level?.charAt(0).toUpperCase() + (user?.skill_level?.slice(1) || "Beginner")}
+                      {(user?.skill_level || "Beginner").charAt(0).toUpperCase() + (user?.skill_level || "Beginner").slice(1)}
                     </Text>
                   </View>
                   <Text style={styles.userStatDivider}>·</Text>
                   <Text style={styles.userStatText}>{(user?.total_points || 0).toLocaleString()} pts</Text>
                 </View>
               </View>
-              <Feather name="chevron-right" size={18} color="rgba(255,255,255,0.4)" />
+              <MaterialCommunityIcons name="chevron-right" size={22} color="rgba(255,255,255,0.3)" />
             </LinearGradient>
           </TouchableOpacity>
 
@@ -119,13 +116,13 @@ export default function MoreScreen() {
                     activeOpacity={0.75}
                   >
                     <LinearGradient colors={item.grad as any} style={styles.menuIcon}>
-                      <Feather name={item.icon as any} size={18} color="#FFF" />
+                      <MaterialCommunityIcons name={item.icon as any} size={18} color="#FFF" />
                     </LinearGradient>
                     <View style={styles.menuContent}>
                       <Text style={styles.menuLabel}>{item.label}</Text>
                       <Text style={styles.menuSub}>{item.sub}</Text>
                     </View>
-                    <Feather name="chevron-right" size={16} color="rgba(255,255,255,0.2)" />
+                    <MaterialCommunityIcons name="chevron-right" size={18} color="rgba(255,255,255,0.2)" />
                   </TouchableOpacity>
                 ))}
               </View>
@@ -144,7 +141,7 @@ export default function MoreScreen() {
           </View>
 
           <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout} activeOpacity={0.75}>
-            <Feather name="log-out" size={18} color="#EF4444" />
+            <MaterialCommunityIcons name="logout" size={18} color="#EF4444" />
             <Text style={styles.logoutText}>Logout</Text>
           </TouchableOpacity>
         </Animated.View>

@@ -1,12 +1,12 @@
 import React, { useRef, useEffect } from "react";
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  RefreshControl, ActivityIndicator, Platform, Animated, Dimensions,
+  RefreshControl, ActivityIndicator, Platform, Animated, Dimensions, Image,
 } from "react-native";
 import { useQuery } from "@tanstack/react-query";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { router } from "expo-router";
-import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
+import { MaterialCommunityIcons, Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useColors } from "@/hooks/useColors";
 import { useAuth } from "@/context/AuthContext";
@@ -24,11 +24,18 @@ const STATUS_COLORS: Record<string, string> = {
 
 const QUICK_ACTIONS = [
   { icon: "upload", label: "Submit Bug", path: "/(student)/submit", grad: ["#1D4ED8", "#3B82F6"] },
-  { icon: "list", label: "My Reports", path: "/(student)/submissions", grad: ["#7C3AED", "#8B5CF6"] },
+  { icon: "format-list-bulleted", label: "My Reports", path: "/(student)/submissions", grad: ["#7C3AED", "#8B5CF6"] },
   { icon: "trending-up", label: "Rankings", path: "/(student)/leaderboard", grad: ["#D97706", "#F59E0B"] },
-  { icon: "dollar-sign", label: "Wallet", path: "/(student)/wallet", grad: ["#059669", "#10B981"] },
-  { icon: "book-open", label: "Learn", path: "/(student)/learn", grad: ["#DB2777", "#EC4899"] },
+  { icon: "currency-usd", label: "Wallet", path: "/(student)/wallet", grad: ["#059669", "#10B981"] },
+  { icon: "book-open-variant", label: "Learn", path: "/(student)/learn", grad: ["#DB2777", "#EC4899"] },
   { icon: "briefcase", label: "Jobs", path: "/(student)/internships", grad: ["#0891B2", "#06B6D4"] },
+];
+
+const TOP_HACKERS = [
+  { name: "Arjun", pts: "2,450", rank: 1, photo: "https://randomuser.me/api/portraits/men/32.jpg" },
+  { name: "Priya", pts: "2,100", rank: 2, photo: "https://randomuser.me/api/portraits/women/44.jpg" },
+  { name: "Rohit", pts: "1,850", rank: 3, photo: "https://randomuser.me/api/portraits/men/15.jpg" },
+  { name: "Sneha", pts: "1,600", rank: 4, photo: "https://randomuser.me/api/portraits/women/23.jpg" },
 ];
 
 export default function StudentDashboard() {
@@ -41,6 +48,7 @@ export default function StudentDashboard() {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const headerSlide = useRef(new Animated.Value(-20)).current;
   const cardsSlide = useRef(new Animated.Value(30)).current;
+  const pulseAnim = useRef(new Animated.Value(1)).current;
 
   const { data, isLoading, refetch, isRefetching } = useQuery({
     queryKey: ["dashboard-stats"],
@@ -53,17 +61,16 @@ export default function StudentDashboard() {
       Animated.timing(headerSlide, { toValue: 0, duration: 700, useNativeDriver: true }),
       Animated.timing(cardsSlide, { toValue: 0, duration: 900, useNativeDriver: true, delay: 200 }),
     ]).start();
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnim, { toValue: 1.2, duration: 800, useNativeDriver: true }),
+        Animated.timing(pulseAnim, { toValue: 1, duration: 800, useNativeDriver: true }),
+      ])
+    ).start();
   }, []);
 
   const stats = data;
   const topPad = insets.top + (isWeb ? 16 : 0);
-
-  const STAT_CARDS = [
-    { label: "Points", value: (stats?.total_points || 0).toLocaleString(), icon: "zap", color: "#3B82F6", sub: "Total earned" },
-    { label: "Wallet", value: `₹${(stats?.wallet_balance || 0).toLocaleString()}`, icon: "dollar-sign", color: "#10B981", sub: "Available" },
-    { label: "Reports", value: stats?.total_submissions || 0, icon: "file-text", color: "#8B5CF6", sub: "Submitted" },
-    { label: "Badges", value: stats?.badge_count || 0, icon: "award", color: "#F59E0B", sub: "Earned" },
-  ];
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -72,16 +79,10 @@ export default function StudentDashboard() {
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={colors.primary} />}
       >
-        {/* Header */}
         <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: headerSlide }] }}>
-          <LinearGradient
-            colors={["#0F2040", "#1A3A6B", "#0B1A35"]}
-            style={[styles.header, { paddingTop: topPad + 20 }]}
-          >
-            {/* Decorative circles */}
+          <LinearGradient colors={["#0F2040", "#1A3A6B", "#0B1A35"]} style={[styles.header, { paddingTop: topPad + 20 }]}>
             <View style={styles.decorCircle1} />
             <View style={styles.decorCircle2} />
-
             <View style={styles.headerTop}>
               <View style={styles.headerLeft}>
                 <Text style={styles.greeting}>Jai Hind 🇮🇳</Text>
@@ -107,28 +108,21 @@ export default function StudentDashboard() {
                 </LinearGradient>
               </TouchableOpacity>
             </View>
-
-            {/* Points highlight bar */}
             <LinearGradient colors={["rgba(59,130,246,0.25)", "rgba(6,182,212,0.15)"]} style={styles.pointsBar}>
-              <View style={styles.pointsBarItem}>
-                <Text style={styles.pointsBarVal}>{(stats?.total_points || 0).toLocaleString()}</Text>
-                <Text style={styles.pointsBarLabel}>Points</Text>
-              </View>
-              <View style={styles.pointsBarDivider} />
-              <View style={styles.pointsBarItem}>
-                <Text style={styles.pointsBarVal}>₹{(stats?.wallet_balance || 0).toLocaleString()}</Text>
-                <Text style={styles.pointsBarLabel}>Balance</Text>
-              </View>
-              <View style={styles.pointsBarDivider} />
-              <View style={styles.pointsBarItem}>
-                <Text style={styles.pointsBarVal}>{stats?.total_submissions || 0}</Text>
-                <Text style={styles.pointsBarLabel}>Reports</Text>
-              </View>
-              <View style={styles.pointsBarDivider} />
-              <View style={styles.pointsBarItem}>
-                <Text style={styles.pointsBarVal}>{stats?.badge_count || 0}</Text>
-                <Text style={styles.pointsBarLabel}>Badges</Text>
-              </View>
+              {[
+                { val: (stats?.total_points || 0).toLocaleString(), label: "Points" },
+                { val: `₹${(stats?.wallet_balance || 0).toLocaleString()}`, label: "Balance" },
+                { val: stats?.total_submissions || 0, label: "Reports" },
+                { val: stats?.badge_count || 0, label: "Badges" },
+              ].map((item, i, arr) => (
+                <React.Fragment key={item.label}>
+                  <View style={styles.pointsBarItem}>
+                    <Text style={styles.pointsBarVal}>{item.val}</Text>
+                    <Text style={styles.pointsBarLabel}>{item.label}</Text>
+                  </View>
+                  {i < arr.length - 1 && <View style={styles.pointsBarDivider} />}
+                </React.Fragment>
+              ))}
             </LinearGradient>
           </LinearGradient>
         </Animated.View>
@@ -137,7 +131,6 @@ export default function StudentDashboard() {
           <ActivityIndicator color={colors.primary} style={{ marginTop: 48 }} size="large" />
         ) : (
           <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: cardsSlide }] }}>
-            {/* Quick Actions */}
             <View style={styles.sectionHeader}>
               <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Quick Actions</Text>
               <TouchableOpacity onPress={() => router.push("/(student)/more")}>
@@ -145,7 +138,7 @@ export default function StudentDashboard() {
               </TouchableOpacity>
             </View>
             <View style={styles.actionsGrid}>
-              {QUICK_ACTIONS.map((action, i) => (
+              {QUICK_ACTIONS.map((action) => (
                 <TouchableOpacity
                   key={action.label}
                   style={styles.actionCard}
@@ -153,26 +146,59 @@ export default function StudentDashboard() {
                   activeOpacity={0.75}
                 >
                   <LinearGradient colors={action.grad as any} style={styles.actionIconBg}>
-                    <Feather name={action.icon as any} size={20} color="#FFF" />
+                    <MaterialCommunityIcons name={action.icon as any} size={22} color="#FFF" />
                   </LinearGradient>
                   <Text style={[styles.actionLabel, { color: colors.foreground }]}>{action.label}</Text>
                 </TouchableOpacity>
               ))}
             </View>
 
-            {/* Threat Alerts */}
+            <View style={styles.sectionHeader}>
+              <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Top Hackers</Text>
+              <TouchableOpacity onPress={() => router.push("/(student)/leaderboard")}>
+                <Text style={[styles.seeAll, { color: colors.primary }]}>Full board</Text>
+              </TouchableOpacity>
+            </View>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{ paddingHorizontal: 16, gap: 12 }}
+            >
+              {TOP_HACKERS.map((hacker) => (
+                <View key={hacker.name} style={styles.hackerCard}>
+                  <LinearGradient
+                    colors={hacker.rank === 1 ? ["#D97706", "#F59E0B"] : hacker.rank === 2 ? ["#475569", "#64748B"] : ["#7C3AED", "#8B5CF6"]}
+                    style={styles.hackerRankBadge}
+                  >
+                    <Text style={styles.hackerRank}>#{hacker.rank}</Text>
+                  </LinearGradient>
+                  <Image source={{ uri: hacker.photo }} style={styles.hackerPhoto} />
+                  <Text style={styles.hackerName}>{hacker.name}</Text>
+                  <Text style={styles.hackerPts}>{hacker.pts} pts</Text>
+                </View>
+              ))}
+              <TouchableOpacity
+                style={[styles.hackerCard, styles.hackerMore]}
+                onPress={() => router.push("/(student)/leaderboard")}
+                activeOpacity={0.75}
+              >
+                <MaterialCommunityIcons name="dots-horizontal" size={24} color="#3B82F6" />
+                <Text style={styles.hackerMoreText}>View all</Text>
+              </TouchableOpacity>
+            </ScrollView>
+
             {stats?.recent_alerts?.length > 0 && (
               <>
                 <View style={styles.sectionHeader}>
                   <View style={styles.sectionTitleRow}>
-                    <View style={[styles.alertDot, { backgroundColor: "#EF4444" }]} />
+                    <Animated.View style={[styles.alertDot, { transform: [{ scale: pulseAnim }] }]} />
                     <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Live Threat Alerts</Text>
                   </View>
                   <TouchableOpacity onPress={() => router.push("/(student)/alerts")}>
                     <Text style={[styles.seeAll, { color: colors.primary }]}>View all</Text>
                   </TouchableOpacity>
                 </View>
-                {stats.recent_alerts.map((alert: any) => {
+                {stats.recent_alerts.slice(0, 3).map((alert: any) => {
                   const sc = SEV_COLORS[alert.severity] || "#666";
                   return (
                     <TouchableOpacity
@@ -187,7 +213,7 @@ export default function StudentDashboard() {
                         </View>
                         {alert.is_verified ? (
                           <View style={styles.verifiedBadge}>
-                            <Feather name="check-circle" size={11} color="#10B981" />
+                            <MaterialCommunityIcons name="check-decagram" size={12} color="#10B981" />
                             <Text style={styles.verifiedText}>CERT-In</Text>
                           </View>
                         ) : null}
@@ -202,7 +228,6 @@ export default function StudentDashboard() {
               </>
             )}
 
-            {/* Recent Reports */}
             {stats?.recent_submissions?.length > 0 && (
               <>
                 <View style={styles.sectionHeader}>
@@ -211,7 +236,7 @@ export default function StudentDashboard() {
                     <Text style={[styles.seeAll, { color: colors.primary }]}>View all</Text>
                   </TouchableOpacity>
                 </View>
-                {stats.recent_submissions.map((sub: any) => {
+                {stats.recent_submissions.slice(0, 3).map((sub: any) => {
                   const sc = STATUS_COLORS[sub.status] || "#666";
                   const sevc = SEV_COLORS[sub.severity] || "#666";
                   return (
@@ -247,30 +272,44 @@ export default function StudentDashboard() {
               </>
             )}
 
-            {/* Daily Mission Card */}
             <View style={styles.sectionHeader}>
-              <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Daily Missions</Text>
+              <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Daily Mission</Text>
             </View>
             <TouchableOpacity activeOpacity={0.85} onPress={() => router.push("/(student)/submit")}>
               <LinearGradient colors={["#0F2040", "#1A3A6B"]} style={styles.missionCard}>
                 <View style={styles.missionTop}>
                   <MaterialCommunityIcons name="target" size={24} color="#06B6D4" />
-                  <View style={[styles.missionBadge]}>
+                  <View style={styles.missionBadge}>
                     <Text style={styles.missionBadgeText}>+50 pts</Text>
                   </View>
                 </View>
-                <Text style={styles.missionTitle}>Submit Your First Report Today</Text>
-                <Text style={styles.missionDesc}>Find and report a vulnerability to earn bonus points and move up the leaderboard.</Text>
+                <Text style={styles.missionTitle}>Submit a Vulnerability Today</Text>
+                <Text style={styles.missionDesc}>Find and report a real security flaw to earn bonus points and climb the national leaderboard.</Text>
                 <View style={styles.missionFooter}>
                   <View style={styles.missionProgress}>
-                    <View style={[styles.missionProgressFill, { width: `${Math.min(100, (stats?.total_submissions || 0) > 0 ? 100 : 0)}%` }]} />
+                    <View style={[styles.missionProgressFill, { width: `${stats?.total_submissions > 0 ? 100 : 0}%` }]} />
                   </View>
-                  <Text style={styles.missionProgressText}>
-                    {stats?.total_submissions > 0 ? "Completed!" : "0/1 done"}
-                  </Text>
+                  <Text style={styles.missionProgressText}>{stats?.total_submissions > 0 ? "Done today! 🎉" : "0/1 done"}</Text>
                 </View>
               </LinearGradient>
             </TouchableOpacity>
+
+            <LinearGradient colors={["#0A1F3A", "#052020"]} style={styles.certBanner}>
+              <MaterialCommunityIcons name="certificate" size={32} color="#FCD34D" />
+              <View style={{ flex: 1 }}>
+                <Text style={styles.certTitle}>Get CERT-In Certified</Text>
+                <Text style={styles.certSub}>Complete 3 courses to earn your government-recognized certification</Text>
+              </View>
+              <TouchableOpacity
+                onPress={() => router.push("/(student)/learn")}
+                style={styles.certBtn}
+                activeOpacity={0.8}
+              >
+                <LinearGradient colors={["#D97706", "#F59E0B"]} style={styles.certBtnGrad}>
+                  <Text style={styles.certBtnText}>Start</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            </LinearGradient>
           </Animated.View>
         )}
       </ScrollView>
@@ -290,7 +329,7 @@ const styles = StyleSheet.create({
   rankRow: { flexDirection: "row", gap: 8, marginTop: 4 },
   rankBadge: { flexDirection: "row", alignItems: "center", gap: 4, backgroundColor: "rgba(252,211,77,0.15)", paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20 },
   rankText: { color: "#FCD34D", fontSize: 11, fontFamily: "Inter_600SemiBold" },
-  avatarBtn: { width: 48, height: 48, borderRadius: 24, alignItems: "center", justifyContent: "center", shadowColor: "#3B82F6", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 8, elevation: 6 },
+  avatarBtn: { width: 48, height: 48, borderRadius: 24, alignItems: "center", justifyContent: "center" },
   avatarText: { color: "#FFF", fontSize: 20, fontFamily: "Inter_700Bold" },
   pointsBar: { flexDirection: "row", borderRadius: 16, padding: 16, marginTop: 4 },
   pointsBarItem: { flex: 1, alignItems: "center", gap: 3 },
@@ -299,13 +338,21 @@ const styles = StyleSheet.create({
   pointsBarDivider: { width: 1, backgroundColor: "rgba(255,255,255,0.1)", marginVertical: 4 },
   sectionHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingHorizontal: 16, paddingTop: 20, paddingBottom: 10 },
   sectionTitleRow: { flexDirection: "row", alignItems: "center", gap: 8 },
-  alertDot: { width: 8, height: 8, borderRadius: 4 },
+  alertDot: { width: 9, height: 9, borderRadius: 5, backgroundColor: "#EF4444" },
   sectionTitle: { fontSize: 16, fontFamily: "Inter_700Bold" },
   seeAll: { fontSize: 13, fontFamily: "Inter_500Medium" },
   actionsGrid: { flexDirection: "row", flexWrap: "wrap", paddingHorizontal: 12, gap: 10 },
   actionCard: { width: (width - 48 - 30) / 3, backgroundColor: "#0F1A2E", borderRadius: 16, padding: 14, alignItems: "center", gap: 10, borderWidth: 1, borderColor: "rgba(255,255,255,0.06)" },
-  actionIconBg: { width: 44, height: 44, borderRadius: 12, alignItems: "center", justifyContent: "center" },
+  actionIconBg: { width: 48, height: 48, borderRadius: 14, alignItems: "center", justifyContent: "center" },
   actionLabel: { fontSize: 11, fontFamily: "Inter_500Medium", textAlign: "center" },
+  hackerCard: { alignItems: "center", gap: 6, backgroundColor: "#0F1A2E", borderRadius: 16, padding: 12, width: 80, borderWidth: 1, borderColor: "rgba(255,255,255,0.06)" },
+  hackerRankBadge: { position: "absolute", top: -6, left: -6, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 10 },
+  hackerRank: { color: "#FFF", fontSize: 9, fontFamily: "Inter_700Bold" },
+  hackerPhoto: { width: 48, height: 48, borderRadius: 24, borderWidth: 2, borderColor: "rgba(59,130,246,0.4)" },
+  hackerName: { color: "#F8FAFC", fontSize: 11, fontFamily: "Inter_600SemiBold" },
+  hackerPts: { color: "rgba(255,255,255,0.45)", fontSize: 9, fontFamily: "Inter_400Regular" },
+  hackerMore: { justifyContent: "center" },
+  hackerMoreText: { color: "#3B82F6", fontSize: 11, fontFamily: "Inter_500Medium" },
   alertCard: { marginHorizontal: 16, marginBottom: 10, padding: 14, borderRadius: 16, borderWidth: 1, borderColor: "rgba(255,255,255,0.06)", borderLeftWidth: 4, gap: 8 },
   alertTop: { flexDirection: "row", alignItems: "center", gap: 8 },
   sevBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 },
@@ -330,4 +377,10 @@ const styles = StyleSheet.create({
   missionProgress: { flex: 1, height: 4, backgroundColor: "rgba(255,255,255,0.1)", borderRadius: 2, overflow: "hidden" },
   missionProgressFill: { height: 4, backgroundColor: "#06B6D4", borderRadius: 2 },
   missionProgressText: { color: "rgba(255,255,255,0.5)", fontSize: 11, fontFamily: "Inter_500Medium" },
+  certBanner: { flexDirection: "row", alignItems: "center", gap: 14, marginHorizontal: 16, marginBottom: 16, padding: 16, borderRadius: 18, borderWidth: 1, borderColor: "rgba(252,211,77,0.15)" },
+  certTitle: { color: "#F8FAFC", fontSize: 14, fontFamily: "Inter_700Bold" },
+  certSub: { color: "rgba(255,255,255,0.45)", fontSize: 11, fontFamily: "Inter_400Regular", marginTop: 3, lineHeight: 16 },
+  certBtn: { overflow: "hidden", borderRadius: 12 },
+  certBtnGrad: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: 12 },
+  certBtnText: { color: "#FFF", fontSize: 13, fontFamily: "Inter_600SemiBold" },
 });

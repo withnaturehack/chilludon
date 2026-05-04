@@ -1,12 +1,11 @@
 import React from "react";
 import { Tabs } from "expo-router";
 import { Platform, View } from "react-native";
-import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
+import { MaterialCommunityIcons, Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useColors } from "@/hooks/useColors";
 
 export default function PoliceLayout() {
-  const colors = useColors();
   const isWeb = Platform.OS === "web";
 
   return (
@@ -25,7 +24,7 @@ export default function PoliceLayout() {
         tabBarBackground: () => (
           <LinearGradient
             colors={["rgba(6,13,26,0.97)", "#060D1A"]}
-            style={[{ flex: 1, borderTopWidth: 1, borderTopColor: "rgba(252,211,77,0.08)" }]}
+            style={{ flex: 1, borderTopWidth: 1, borderTopColor: "rgba(252,211,77,0.1)" }}
           />
         ),
         tabBarLabelStyle: { fontSize: 10, fontFamily: "Inter_500Medium", marginBottom: 6 },
@@ -38,8 +37,10 @@ export default function PoliceLayout() {
           title: "Dashboard",
           tabBarIcon: ({ color, focused }) => (
             focused
-              ? <View style={{ backgroundColor: "rgba(252,211,77,0.15)", borderRadius: 8, padding: 4 }}><Feather name="home" size={20} color={color} /></View>
-              : <Feather name="home" size={20} color={color} />
+              ? <View style={{ backgroundColor: "rgba(252,211,77,0.15)", borderRadius: 8, padding: 4 }}>
+                  <MaterialCommunityIcons name="view-dashboard" size={20} color={color} />
+                </View>
+              : <MaterialCommunityIcons name="view-dashboard-outline" size={20} color={color} />
           ),
         }}
       />
@@ -49,8 +50,10 @@ export default function PoliceLayout() {
           title: "Review",
           tabBarIcon: ({ color, focused }) => (
             focused
-              ? <View style={{ backgroundColor: "rgba(252,211,77,0.15)", borderRadius: 8, padding: 4 }}><Feather name="file-text" size={20} color={color} /></View>
-              : <Feather name="file-text" size={20} color={color} />
+              ? <View style={{ backgroundColor: "rgba(252,211,77,0.15)", borderRadius: 8, padding: 4 }}>
+                  <MaterialCommunityIcons name="file-document" size={20} color={color} />
+                </View>
+              : <MaterialCommunityIcons name="file-document-outline" size={20} color={color} />
           ),
         }}
       />
@@ -60,8 +63,23 @@ export default function PoliceLayout() {
           title: "Cases",
           tabBarIcon: ({ color, focused }) => (
             focused
-              ? <View style={{ backgroundColor: "rgba(252,211,77,0.15)", borderRadius: 8, padding: 4 }}><MaterialCommunityIcons name="briefcase-outline" size={20} color={color} /></View>
+              ? <View style={{ backgroundColor: "rgba(252,211,77,0.15)", borderRadius: 8, padding: 4 }}>
+                  <MaterialCommunityIcons name="briefcase" size={20} color={color} />
+                </View>
               : <MaterialCommunityIcons name="briefcase-outline" size={20} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="location"
+        options={{
+          title: "Live Map",
+          tabBarIcon: ({ color, focused }) => (
+            focused
+              ? <View style={{ backgroundColor: "rgba(252,211,77,0.15)", borderRadius: 8, padding: 4 }}>
+                  <MaterialCommunityIcons name="map-marker-radius" size={20} color={color} />
+                </View>
+              : <MaterialCommunityIcons name="map-marker-radius-outline" size={20} color={color} />
           ),
         }}
       />
@@ -71,19 +89,15 @@ export default function PoliceLayout() {
           title: "Intel",
           tabBarIcon: ({ color, focused }) => (
             focused
-              ? <View style={{ backgroundColor: "rgba(252,211,77,0.15)", borderRadius: 8, padding: 4 }}><MaterialCommunityIcons name="radar" size={20} color={color} /></View>
+              ? <View style={{ backgroundColor: "rgba(252,211,77,0.15)", borderRadius: 8, padding: 4 }}>
+                  <MaterialCommunityIcons name="radar" size={20} color={color} />
+                </View>
               : <MaterialCommunityIcons name="radar" size={20} color={color} />
           ),
         }}
       />
-      <Tabs.Screen
-        name="alerts"
-        options={{ href: null }}
-      />
-      <Tabs.Screen
-        name="analytics"
-        options={{ href: null }}
-      />
+      <Tabs.Screen name="alerts" options={{ href: null }} />
+      <Tabs.Screen name="analytics" options={{ href: null }} />
     </Tabs>
   );
 }
